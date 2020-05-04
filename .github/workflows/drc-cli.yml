@@ -24,14 +24,18 @@ jobs:
       - run: mkdir build
       - run: flutter pub get
       - run: dart2native bin/drc.dart -v -o build/${{ matrix.output-name }}
-      - uses: actions/upload-artifact@v1
+      - uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ matrix.output-name }}
-          path: build/${{ matrix.output-name }}
-      - uses: meeDamian/github-release@1.0
-        with:
-          token: ${{secrets.GITHUB_TOKEN}}
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
           draft: true
-          gzip: true
-          files: build/${{ matrix.output-name }}
+        if: github.event.created
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          asset_path: build/${{ matrix.output-name }}
+          asset_name: ${{ matrix.output-name }}
         if: github.event.created
