@@ -1,8 +1,35 @@
-name: Build drc cli
 
+build_upload:
+
+
+name: CI drc cli
 on: [push]
-
 jobs:
+  create_release:
+    name: createrelease
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v1
+      - name: create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+        if: github.event.created
+      - name: Output Release URL File
+        run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
+        if: github.event.created
+      - name: Save Release URL File for publish
+        uses: actions/upload-artifact@v1
+        with:
+          name: release_url
+          path: release_url.txt
+        if: github.event.created
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -24,20 +51,22 @@ jobs:
       - run: mkdir build
       - run: flutter pub get
       - run: dart2native bin/drc.dart -v -o build/${{ matrix.output-name }}
-      - uses: actions/create-release@v1
-        id: create_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Load Release URL File from release job
+        uses: actions/download-artifact@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
+          name: release_url
+        if: github.event.created
+      - name: Get Release File Name & Upload URL
+        id: get_release_info
+        run: |
+          value=`cat release_url/release_url.txt`
+          echo ::set-output name=upload_url::$value
         if: github.event.created
       - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
           asset_path: build/${{ matrix.output-name }}
           asset_name: ${{ matrix.output-name }}
           asset_content_type: application/octet-stream
