@@ -1,7 +1,3 @@
-
-build_upload:
-
-
 name: CI drc cli
 on: [push]
 jobs:
