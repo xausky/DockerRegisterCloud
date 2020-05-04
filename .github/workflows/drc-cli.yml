@@ -40,4 +40,5 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: build/${{ matrix.output-name }}
           asset_name: ${{ matrix.output-name }}
+          asset_content_type: application/octet-stream
         if: github.event.created
