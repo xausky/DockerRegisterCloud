@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 
-import 'package:docker_register_cloud/cli.dart';
+import 'package:docker_register_cloud/app.dart';
 
 class AuthManager {
   GlobalConfig config;

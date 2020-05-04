@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:docker_register_cloud/auth.dart';
-import 'package:docker_register_cloud/cli.dart';
+import 'package:docker_register_cloud/app.dart';
 import 'package:filesize/filesize.dart';
 
 class Repository {

@@ -1,0 +1,30 @@
+name: Build drc cli
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        include:
+          - os: ubuntu-latest
+            output-name: drc-linux
+          - os: macOS-latest
+            output-name: drc-darwin
+          - os: windows-latest
+            output-name: drc-windows.exe
+    steps:
+      - uses: actions/checkout@v2
+      - uses: DanTup/gh-actions/setup-dart@master
+      - run: mkdir build
+      - run: dart2native bin/main.dart -v -o build/${{ matrix.output-name }}
+      - uses: actions/upload-artifact@v1
+        with:
+          name: ${{ matrix.output-name }}
+          path: build/${{ matrix.output-name }}
