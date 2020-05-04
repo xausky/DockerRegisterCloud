@@ -25,6 +25,7 @@ jobs:
       - run: flutter pub get
       - run: dart2native bin/drc.dart -v -o build/${{ matrix.output-name }}
       - uses: actions/create-release@v1
+        id: create_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
