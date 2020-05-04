@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:docker_register_cloud/app.dart';
+import 'package:docker_register_cloud/repository.dart';
 
 class AuthManager {
   GlobalConfig config;
@@ -31,12 +32,10 @@ class AuthManager {
   }
 
   Future<String> login(String repository, String username, String password) async {
-    RegExpMatch match = RegExp("^(?<server>.*?)/(?<name>.*)\$").firstMatch(repository);
-    String server = match.namedGroup("server");
-    String name = match.namedGroup("name");
+    RepositoryArtifact artifact = Repository.sovleRepository(repository);
     HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.getUrl(Uri.parse("https://$server/v2/"));
-    request.headers.add("User-Agent", config.userAgent);
+    HttpClientRequest request = await httpClient.postUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/blobs/uploads/"));
+    request.headers.set("User-Agent", config.userAgent);
     HttpClientResponse response = await request.close();
     if (response.statusCode == 401) {
       config.repositoryCretificates[repository] = Base64Encoder().convert(utf8.encode("$username:$password"));

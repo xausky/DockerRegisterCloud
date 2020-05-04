@@ -18,18 +18,18 @@ class Repository {
   Future<Translation> begin() async {
     Translation translation = new Translation();
     translation.config.fileItems = await list();
-    RegExpMatch match = RegExp("^(?<server>.*?)/(?<name>.*)\$").firstMatch(config.currentRepository);
-    translation.server = match.namedGroup("server");
-    translation.name = match.namedGroup("name");
+    RepositoryArtifact artifact = sovleRepository(config.currentRepository);
+    translation.server = artifact.server;
+    translation.name = artifact.name;
     return translation;
   }
 
   Future<String> beginUpload(Translation translation) async {
     HttpClient httpClient = HttpClient();
     HttpClientRequest request = await httpClient.postUrl(Uri.parse("https://${translation.server}/v2/${translation.name}/blobs/uploads/"));
-    request.headers.add("User-Agent", config.userAgent);
+    request.headers.set("User-Agent", config.userAgent);
     if(translation.token != null){
-      request.headers.add("Authorization", "Bearer ${translation.token}");
+      request.headers.set("Authorization", "Bearer ${translation.token}");
     }
     HttpClientResponse response = await request.close();
     String token;
@@ -37,8 +37,8 @@ class Repository {
       token = await auth.challenge(config.currentRepository, response.headers.value("Www-Authenticate"));
       translation.token = token;
       request = await httpClient.postUrl(Uri.parse("https://${translation.server}/v2/${translation.name}/blobs/uploads/"));
-      request.headers.add("User-Agent", config.userAgent);
-      request.headers.add("Authorization", "Bearer $token");
+      request.headers.set("User-Agent", config.userAgent);
+      request.headers.set("Authorization", "Bearer $token");
       response = await request.close();
     }
     if (response.statusCode >= 300 || response.statusCode < 200){
@@ -73,10 +73,10 @@ class Repository {
     manifest["config"] = manifestConfig;
     manifest["layers"] = layers;
     HttpClientRequest request = await httpClient.putUrl(Uri.parse("https://${translation.server}/v2/${translation.name}/manifests/latest"));
-    request.headers.add("User-Agent", config.userAgent);
-    request.headers.add("Content-Type", "application/vnd.docker.distribution.manifest.v2+json");
+    request.headers.set("User-Agent", config.userAgent);
+    request.headers.set("Content-Type", "application/vnd.docker.distribution.manifest.v2+json");
     if (translation.token != null){
-      request.headers.add("Authorization", "Bearer ${translation.token}");
+      request.headers.set("Authorization", "Bearer ${translation.token}");
     }
     String requestBody = jsonEncode(manifest);
     print(requestBody);
@@ -92,10 +92,10 @@ class Repository {
     Uri uploadUri = Uri.parse("$url&digest=sha256:$hash");
     HttpClient httpClient = HttpClient();
     HttpClientRequest request = await httpClient.putUrl(uploadUri);
-    request.headers.add("User-Agent", config.userAgent);
-    request.headers.add("Content-Type", "application/octet-stream");
+    request.headers.set("User-Agent", config.userAgent);
+    request.headers.set("Content-Type", "application/octet-stream");
     if (translation.token != null){
-      request.headers.add("Authorization", "Bearer ${translation.token}");
+      request.headers.set("Authorization", "Bearer ${translation.token}");
     }
     request.contentLength = await File(path).length();
     var length = await File(path).length();
@@ -129,10 +129,10 @@ class Repository {
     Uri uploadUri = Uri.parse("$url&digest=sha256:$hash");
     HttpClient httpClient = HttpClient();
     HttpClientRequest request = await httpClient.putUrl(uploadUri);
-    request.headers.add("User-Agent", config.userAgent);
-    request.headers.add("Content-Type", "application/octet-stream");
+    request.headers.set("User-Agent", config.userAgent);
+    request.headers.set("Content-Type", "application/octet-stream");
     if (translation.token != null){
-      request.headers.add("Authorization", "Bearer ${translation.token}");
+      request.headers.set("Authorization", "Bearer ${translation.token}");
     }
     request.contentLength = content.length;
     await request.addStream(Stream.fromFuture(Future.value(content)));
@@ -145,20 +145,18 @@ class Repository {
   }
 
   Future<List<FileItem>> list() async {
-    RegExpMatch match = RegExp("^(?<server>.*?)/(?<name>.*)\$").firstMatch(config.currentRepository);
-    String server = match.namedGroup("server");
-    String name = match.namedGroup("name");
+    RepositoryArtifact artifact = sovleRepository(config.currentRepository);
     HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.getUrl(Uri.parse("https://$server/v2/$name/manifests/latest"));
-    request.headers.add("User-Agent", config.userAgent);
+    HttpClientRequest request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/manifests/latest"));
+    request.headers.set("User-Agent", config.userAgent);
     HttpClientResponse response = await request.close();
     String token;
     if (response.statusCode == 401) {
       token = await auth.challenge(config.currentRepository, response.headers.value("Www-Authenticate"));
-      request = await httpClient.getUrl(Uri.parse("https://$server/v2/$name/manifests/latest"));
-      request.headers.add("User-Agent", config.userAgent);
-      request.headers.add("Authorization", "Bearer $token");
-      request.headers.add("Accept", "application/vnd.docker.distribution.manifest.v2+json");
+      request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/manifests/latest"));
+      request.headers.set("User-Agent", config.userAgent);
+      request.headers.set("Authorization", "Bearer $token");
+      request.headers.set("Accept", "application/vnd.docker.distribution.manifest.v2+json");
       response = await request.close();
     }
     if(response.statusCode == 404){
@@ -174,19 +172,17 @@ class Repository {
   }
 
   Future<String> pullConfig(String digest) async {
-    RegExpMatch match = RegExp("^(?<server>.*?)/(?<name>.*)\$").firstMatch(config.currentRepository);
-    String server = match.namedGroup("server");
-    String name = match.namedGroup("name");
+    RepositoryArtifact artifact = sovleRepository(config.currentRepository);
     HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.getUrl(Uri.parse("https://$server/v2/$name/blobs/$digest"));
-    request.headers.add("User-Agent", config.userAgent);
+    HttpClientRequest request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/blobs/$digest"));
+    request.headers.set("User-Agent", config.userAgent);
     HttpClientResponse response = await request.close();
     String token;
     if (response.statusCode == 401) {
       token = await auth.challenge(config.currentRepository, response.headers.value("Www-Authenticate"));
-      request = await httpClient.getUrl(Uri.parse("https://$server/v2/$name/blobs/$digest"));
-      request.headers.add("User-Agent", config.userAgent);
-      request.headers.add("Authorization", "Bearer $token");
+      request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/blobs/$digest"));
+      request.headers.set("User-Agent", config.userAgent);
+      request.headers.set("Authorization", "Bearer $token");
       response = await request.close();
     }
     if (response.statusCode >= 300 || response.statusCode < 200){
@@ -196,25 +192,22 @@ class Repository {
   }
 
   Future<void> pull(String hash, String path) async {
-    RegExpMatch match = RegExp("^(?<server>.*?)/(?<name>.*)\$").firstMatch(config.currentRepository);
-    String server = match.namedGroup("server");
-    String name = match.namedGroup("name");
+    RepositoryArtifact artifact = sovleRepository(config.currentRepository);
     HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.getUrl(Uri.parse("https://$server/v2/$name/blobs/$hash"));
-    //request.followRedirects = false;
-    request.headers.add("User-Agent", config.userAgent);
+    HttpClientRequest request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
+    request.headers.set("User-Agent", config.userAgent);
     HttpClientResponse response = await request.close();
     String token;
     if (response.statusCode == 401) {
       token = await auth.challenge(config.currentRepository, response.headers.value("Www-Authenticate"));
-      request = await httpClient.getUrl(Uri.parse("https://$server/v2/$name/blobs/$hash"));
-      request.headers.add("User-Agent", config.userAgent);
-      request.headers.add("Authorization", "Bearer $token");
-      //request.followRedirects = false;
+      request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
+      request.headers.set("User-Agent", config.userAgent);
+      request.headers.set("Authorization", "Bearer $token");
+      //TODO Direct Download For request.followRedirects = false;
       response = await request.close();
     }
     if (response.statusCode >= 300 || response.statusCode < 200){
-      throw "Repository list status code ${response.statusCode}";
+      throw "Repository pull status code ${response.statusCode}";
     }
     var length = response.contentLength;
     var start = DateTime.now().millisecondsSinceEpoch;
@@ -222,13 +215,44 @@ class Repository {
     Timer.periodic(Duration(milliseconds: 500), (timer) {
       var current = DateTime.now().millisecondsSinceEpoch;
       var speed = (received / (current - start) * 1000).round();
-      print("Downloading $name received ${filesize(received)} total ${filesize(length)} speed ${filesize(speed)}/s");
+      print("Downloading $path received ${filesize(received)} total ${filesize(length)} speed ${filesize(speed)}/s");
     });
     await response.map((s) {
       received += s.length;
       return s;
       }).pipe(File(path).openWrite());
   }
+
+  static RepositoryArtifact sovleRepository(String repository){
+    List<String> artifacts = repository.split("/");
+    String name, server;
+    switch(artifacts.length){
+      case 1:
+        name = "library/${artifacts[0]}";
+        break;
+      case 2:
+        name = "${artifacts[0]}/${artifacts[1]}";
+        break;
+      case 3:
+        server = artifacts[0];
+        name = "${artifacts[1]}/${artifacts[2]}";
+        break;
+      default:
+        throw "Unsupport repository $repository";
+        break;
+    }
+    RepositoryArtifact result = RepositoryArtifact();
+    if(server != null){
+      result.server = server;
+    }
+    result.name = name;
+    return result;
+  }
+}
+
+class RepositoryArtifact {
+  String server = "registry-1.docker.io";
+  String name;
 }
 
 class Translation {
