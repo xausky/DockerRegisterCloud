@@ -1,4 +1,4 @@
-name: CI drc cli
+name: Build Command Tools
 on: [push]
 jobs:
   release:
