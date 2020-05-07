@@ -6,11 +6,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: subosito/flutter-action@v1
-        with:
-          channel: 'beta'
       - uses: cedx/setup-dart@v1.3.0
-      - run: flutter doctor
+      - run: flutter channel beta
+      - run: flutter upgrade
       - run: flutter config --enable-web
+      - run: flutter doctor
       - run: flutter pub get
       - run: dart2native bin/drcd.dart -v -o docker/drcd
       - run: flutter build web
