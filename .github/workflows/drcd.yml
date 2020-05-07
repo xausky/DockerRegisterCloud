@@ -9,6 +9,7 @@ jobs:
         with:
           channel: 'beta'
       - uses: cedx/setup-dart@v1.3.0
+      - run: flutter config --enable-web
       - run: flutter pub get
       - run: dart2native bin/drcd.dart -v -o docker/drcd
       - run: flutter build web
