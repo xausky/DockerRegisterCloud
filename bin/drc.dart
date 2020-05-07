@@ -23,6 +23,7 @@ void main(List<String> args) async {
   parser.addCommand("use").addSeparator("Switch current repository.\nbrc use <repository>\teg. brc use registry-1.docker.io/xausky/public");
   parser.addCommand("repos").addSeparator("List repository list.\nbrc repos");
   parser.addCommand("rmr").addSeparator("Remove repository from repository list.\nbrc rmr <repository>");
+  parser.addCommand("link").addSeparator("Direct download address of file.\nbrc link <digest>");
   parser.addSeparator('Use "brc [command] --help" for more information about a command.');
   var result = parser.parse(args);
   if(result['help'] || result.command == null){
@@ -85,6 +86,10 @@ void main(List<String> args) async {
     case "rmr":
     String repository = result.command.arguments[0];
     await auth.remove(repository);
+    break;
+    case "link":
+    String link = await repository.link(result.command.arguments[0]);
+    print(link);
     break;
   }
   exit(0);

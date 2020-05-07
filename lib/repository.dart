@@ -114,7 +114,7 @@ class Repository {
     HttpClientResponse response = await request.close();
     if (response.statusCode >= 300 || response.statusCode < 200){
       String body = await response.transform(utf8.decoder).join();
-      throw "Repository upload status code ${response.statusCode} $body";
+      throw "Repository upload status code ${response.statusCode} ${response.headers} $body";
     }
     FileItem fileItem = FileItem();
     fileItem.name = name;
@@ -149,6 +149,7 @@ class Repository {
     HttpClient httpClient = HttpClient();
     HttpClientRequest request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/manifests/latest"));
     request.headers.set("User-Agent", config.userAgent);
+    request.headers.set("Accept", "application/vnd.docker.distribution.manifest.v2+json");
     HttpClientResponse response = await request.close();
     String token;
     if (response.statusCode == 401) {
@@ -163,7 +164,8 @@ class Repository {
       return List();
     }
     if (response.statusCode >= 300 || response.statusCode < 200){
-      throw "Repository list status code ${response.statusCode}";
+      String body = await response.transform(utf8.decoder).join();
+      throw "Repository list status code ${response.statusCode} $body";
     }
     String body = await response.transform(utf8.decoder).join();
     String configContent = await pullConfig(jsonDecode(body)["config"]["digest"]);
@@ -191,6 +193,28 @@ class Repository {
     return response.transform(utf8.decoder).join();
   }
 
+  Future<String> link(String hash) async {
+    RepositoryArtifact artifact = sovleRepository(config.currentRepository);
+    HttpClient httpClient = HttpClient();
+    HttpClientRequest request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
+    request.headers.set("User-Agent", config.userAgent);
+    request.followRedirects = false;
+    HttpClientResponse response = await request.close();
+    String token;
+    if (response.statusCode == 401) {
+      token = await auth.challenge(config.currentRepository, response.headers.value("Www-Authenticate"));
+      request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
+      request.headers.set("User-Agent", config.userAgent);
+      request.headers.set("Authorization", "Bearer $token");
+      request.followRedirects = false;
+      response = await request.close();
+    }
+    if (response.statusCode >= 400 || response.statusCode < 300){
+      throw "Repository pull status code ${response.statusCode}";
+    }
+    return response.headers.value("Location");
+  }
+
   Future<void> pull(String hash, String path) async {
     RepositoryArtifact artifact = sovleRepository(config.currentRepository);
     HttpClient httpClient = HttpClient();
@@ -203,7 +227,6 @@ class Repository {
       request = await httpClient.getUrl(Uri.parse("https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
       request.headers.set("User-Agent", config.userAgent);
       request.headers.set("Authorization", "Bearer $token");
-      //TODO Direct Download For request.followRedirects = false;
       response = await request.close();
     }
     if (response.statusCode >= 300 || response.statusCode < 200){

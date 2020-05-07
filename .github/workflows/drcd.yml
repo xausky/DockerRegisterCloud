@@ -1,0 +1,16 @@
+name: Direct Service Docker
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: 'stable'
+      - uses: cedx/setup-dart@v1.3.0
+      - run: flutter pub get
+      - run: dart2native bin/drcd.dart -v -o docker/drcd
+      - run: cat ~/GH_TOKEN.txt | docker login docker.pkg.github.com -u xausky --password-stdin
+      - run: docker build -t docker.pkg.github.com/xausky/dockerregistercloud/drcd:${{ github.ref }} docker
+      - run: docker push docker.pkg.github.com/xausky/dockerregistercloud/drcd:${{ github.ref }}
