@@ -11,6 +11,8 @@ jobs:
       - uses: cedx/setup-dart@v1.3.0
       - run: flutter pub get
       - run: dart2native bin/drcd.dart -v -o docker/drcd
-      - run: echo $GITHUB_TOKEN | docker login docker.pkg.github.com -u xausky --password-stdin
+      - run: echo $PACKAGE_UPLOAD_KEY | docker login docker.pkg.github.com -u xausky --password-stdin
+        env:
+          PACKAGE_UPLOAD_KEY: ${{ secrets.PACKAGE_UPLOAD_KEY }}
       - run: docker build -t docker.pkg.github.com/xausky/dockerregistercloud/drcd:${{ github.ref }} docker
       - run: docker push docker.pkg.github.com/xausky/dockerregistercloud/drcd:${{ github.ref }}

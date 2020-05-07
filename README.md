@@ -1,6 +1,6 @@
 <h1 align="center">Welcome to Docker Register Cloud</h1>
 <p>
-  <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/xausky/DockerRegisterCloud/CI drc cli">
+  <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/xausky/DockerRegisterCloud/Build Command Tools">
   <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/xausky/DockerRegisterCloud">
   <img alt="GitHub All Releases" src="https://img.shields.io/github/downloads/xausky/DockerRegisterCloud/total">
   <img alt="GitHub issues" src="https://img.shields.io/github/issues/xausky/DockerRegisterCloud">
