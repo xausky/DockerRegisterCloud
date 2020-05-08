@@ -15,7 +15,9 @@
 
 ## :dvd: 演示
 
-[![asciicast](https://asciinema.org/a/326728.svg)](https://asciinema.org/a/326728)
+> 演示中的服务 drc.xausky.cn 只是临时使用，请使用下述的仓库服务代替。
+
+[![asciicast](https://asciinema.org/a/96yOa8vCRp4U5NjsNHJdEAq85.svg)](https://asciinema.org/a/96yOa8vCRp4U5NjsNHJdEAq85)
 
 ## :zap: 直接下载
 
