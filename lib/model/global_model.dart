@@ -1,12 +1,13 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-
 import 'package:docker_register_cloud/app.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-class GlobalModel extends ChangeNotifier {
+import 'package:docker_register_cloud/model/global_model.dart'
+    if (dart.library.io) 'package:docker_register_cloud/model/native_global_model.dart'
+    if (dart.library.html) 'package:docker_register_cloud/model/web_global_model.dart';
+    
+abstract class GlobalModel extends ChangeNotifier {
   UIGlobalConfig config = UIGlobalConfig();
 
   GlobalModel() {
@@ -19,28 +20,12 @@ class GlobalModel extends ChangeNotifier {
     this.notifyListeners();
   }
 
-  Future<String> link(String repository, String digest) async {
-    var response = await http.get("/api/link?repository=$repository&digest=$digest");
-    if (response.statusCode >= 300 || response.statusCode < 200) {
-        throw "/items Invoke Error ${response.statusCode}";
-    }
-    return jsonDecode(response.body)["link"];
-  }
-
-  Future<List<FileItem>> items(String repository) async {
-    if (kIsWeb) {
-      var response = await http.get("/api/items?repository=$repository");
-      print(response.body);
-      if (response.statusCode == 404) {
-        return [];
-      }
-      if (response.statusCode >= 300 || response.statusCode < 200) {
-        throw "/items Invoke Error ${response.statusCode}";
-      }
-      return List.from(jsonDecode(response.body)).map((e) => FileItem.fromJson(e)).toList();
-    } else {
-      return [];
-    }
+  Future<String> link(String repository, String digest);
+  Future<List<FileItem>> items(String repository);
+  void download(String url, String name);
+  void writeClipy(String content);
+  static GlobalModel instance(){
+    return instanceOfGlobalModel();
   }
 }
 

@@ -1,12 +1,10 @@
-import 'dart:html' as html;
-
 import 'package:docker_register_cloud/model/global_model.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:clippy/browser.dart' as clipy;
+import 'package:url_launcher/url_launcher.dart';
 
 class DrcFileList extends StatefulWidget {
   final String repository;
@@ -49,13 +47,19 @@ class DrcFileListState extends State<DrcFileList> {
 
   onDownloadClick(FileItem item, String name) async {
     GlobalModel global = Provider.of<GlobalModel>(context, listen: false);
-    String link = await global.link(widget.repository, item.digest);
-    if (kIsWeb) {
-      print(name);
-      html.AnchorElement anchorElement = new html.AnchorElement(href: link);
-      anchorElement.setAttribute("download", name);
-      anchorElement.click();
-    }
+    global.link(widget.repository, item.digest).then((value) {
+      global.download(value, name);
+    }).catchError((err) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("获取下载链接失败，推荐用本地客户端试试"),
+        action: SnackBarAction(
+          label: "下载客户端",
+          onPressed: () {
+            launch("https://github.com/xausky/DockerRegisterCloud");
+          },
+        ),
+      ));
+    });
   }
 
   onRefreshClick() {
@@ -63,9 +67,19 @@ class DrcFileListState extends State<DrcFileList> {
     setState(() {
       items = null;
     });
-    global.items(widget.repository).then((value) => setState(() {
-          items = value;
-        }));
+    global
+        .items(widget.repository)
+        .then((value) => setState(() {
+              items = value;
+            }))
+        .catchError((err) {
+      setState(() {
+        items = [];
+      });
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("获取文件列表失败，仓库不存在或者非公开。"),
+      ));
+    });
   }
 
   @override
@@ -73,6 +87,9 @@ class DrcFileListState extends State<DrcFileList> {
     if (widget.repository != this.repository && widget.repository != null) {
       this.repository = widget.repository;
       onRefreshClick();
+    }
+    if (widget.repository == null) {
+      items = [];
     }
     myController.text = "${this.repository}:${this.path}";
     List<Widget> list = List();
@@ -85,6 +102,7 @@ class DrcFileListState extends State<DrcFileList> {
               Container(
                 child: IconButton(
                   iconSize: 32,
+                  color: Theme.of(context).primaryColor,
                   icon: Icon(Icons.home),
                   onPressed: () {
                     setState(() {
@@ -97,6 +115,7 @@ class DrcFileListState extends State<DrcFileList> {
               Container(
                 child: IconButton(
                   iconSize: 32,
+                  color: Theme.of(context).primaryColor,
                   icon: Icon(Icons.keyboard_arrow_up),
                   onPressed: () {
                     setState(() {
@@ -115,6 +134,7 @@ class DrcFileListState extends State<DrcFileList> {
               Container(
                 child: IconButton(
                   iconSize: 32,
+                  color: Theme.of(context).primaryColor,
                   icon: Icon(Icons.refresh),
                   onPressed: () {
                     onRefreshClick();
@@ -227,6 +247,9 @@ class FileItemViewState extends State<FileItemView> {
           Icon(
             widget.directory ? Icons.folder : Icons.insert_drive_file,
             size: 48,
+            color: widget.directory
+                ? Theme.of(context).primaryColorLight
+                : Theme.of(context).primaryColor,
           ),
           Expanded(
             child: Column(
@@ -250,9 +273,12 @@ class FileItemViewState extends State<FileItemView> {
           widget.directory
               ? Column()
               : IconButton(
+                  color: Theme.of(context).primaryColor,
                   icon: Icon(Icons.content_copy),
                   onPressed: () async {
-                    await clipy.write(widget.name);
+                    GlobalModel global =
+                        Provider.of<GlobalModel>(context, listen: false);
+                    global.writeClipy(widget.name);
                     Scaffold.of(context).showSnackBar(SnackBar(
                       content: Text("复制文件名成功"),
                     ));
@@ -262,16 +288,30 @@ class FileItemViewState extends State<FileItemView> {
           widget.directory
               ? Column()
               : IconButton(
+                  color: Theme.of(context).primaryColor,
                   icon: Icon(Icons.link),
                   onPressed: () async {
                     GlobalModel global =
                         Provider.of<GlobalModel>(context, listen: false);
-                    String link = await global.link(
-                        global.config.currentRepository, widget.digest);
-                    await clipy.write(link);
-                    Scaffold.of(context).showSnackBar(SnackBar(
-                      content: Text("复制下载链接成功"),
-                    ));
+                    global
+                        .link(global.config.currentRepository, widget.digest)
+                        .then((value) {
+                      global.writeClipy(value);
+                      Scaffold.of(context).showSnackBar(SnackBar(
+                        content: Text("复制下载链接成功"),
+                      ));
+                    }).catchError((err) {
+                      Scaffold.of(context).showSnackBar(SnackBar(
+                        content: Text("获取下载链接失败，推荐用本地客户端试试"),
+                        action: SnackBarAction(
+                          label: "下载客户端",
+                          onPressed: () {
+                            launch(
+                                "https://github.com/xausky/DockerRegisterCloud");
+                          },
+                        ),
+                      ));
+                    });
                   },
                   tooltip: "复制下载链接",
                 ),

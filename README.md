@@ -17,10 +17,16 @@
 
 [![asciicast](https://asciinema.org/a/326728.svg)](https://asciinema.org/a/326728)
 
+## :zap: 直接下载
+
+在支持的仓库上可以通过浏览器实现无客户端下载功能，对直接下载服务的服务器端压力很小。  
+目前有部署公共服务器： [https://drcd.xausky.cn/](https://drcd.xausky.cn/)  
+也可以使用[此 Docker 镜像](https://github.com/xausky/DockerRegisterCloud/packages/214808)自行部署
+
 ## :dart: 功能
 
 * [x] 命令行工具基本功能，登录，文件列表，上传文件，下载文件
-* [ ] 直接下载，在支持的仓库服务中可以直接在浏览器中实现下载而无需客户端
+* [x] 直接下载，在支持的仓库服务中可以直接在浏览器中实现下载而无需客户端
 * [ ] 命令行功能优化，重命名文件以及删除文件
 * [ ] GUI 客户端，预计包括 Linux, Windows, Mac OS, Android, iOS，本项目使用 Dart 编写，GUI 客户端将使用 Flutter，期待热心小伙伴的帮助。
 
@@ -28,9 +34,12 @@
 
 > 如果你测试的仓库服务器有问题欢迎提交 [问题](https://github.com/xausky/DockerRegisterCloud/issues) 如果没有问题欢迎提交 PR 加到本列表
 
-* [Docker Hub](https://hub.docker.com/)
-* [百度智能云](https://console.bce.baidu.com/ccr/)
-* [阿里云](https://cr.console.aliyun.com/)
+服务提供商|无需成本|直接下载支持
+-|-|-
+[Docker Register](https://docs.docker.com/registry/)|:heavy_multiplication_x:|:heavy_multiplication_x:
+[Docker Hub](https://hub.docker.com/)|:heavy_check_mark:|:heavy_check_mark:
+[百度智能云](https://console.bce.baidu.com/ccr/)|:heavy_check_mark:|:heavy_multiplication_x:
+[阿里云](https://cr.console.aliyun.com/)|:heavy_check_mark:|:heavy_check_mark:
 
 ## :hearts: 关注我
 
