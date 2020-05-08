@@ -17,13 +17,14 @@ void main(List<String> args) async {
   ..addSeparator("Log in to a Docker registry.\nbrc login <repository>")
   ..addOption("username", abbr: "u", help: "Specify username.")
   ..addOption("password", abbr: "p", help: "Specify a password, only recommended for batch processing.");
-  parser.addCommand("push").addSeparator("Upload a file to the current repository.\nbrc push <localFile> <name>");
-  parser.addCommand("pull").addSeparator("Download a file from the current repository.\nbrc pull <digest> <localFileName>");
+  parser.addCommand("push").addSeparator("Upload a file to the current repository.\nbrc push <path> <name>");
+  parser.addCommand("pull").addSeparator("Download a file from the current repository.\nbrc pull <name> <path>");
   parser.addCommand("ls").addSeparator("List the current repository file list.\nbrc list");
   parser.addCommand("use").addSeparator("Switch current repository.\nbrc use <repository>\teg. brc use registry-1.docker.io/xausky/public");
   parser.addCommand("repos").addSeparator("List repository list.\nbrc repos");
   parser.addCommand("rmr").addSeparator("Remove repository from repository list.\nbrc rmr <repository>");
-  parser.addCommand("link").addSeparator("Direct download address of file.\nbrc link <digest>");
+  parser.addCommand("link").addSeparator("Direct download address of file.\nbrc link <name>");
+  parser.addCommand("rm").addSeparator("Remove a file from the current repository.\nbrc rm <name>");
   parser.addSeparator('Use "brc [command] --help" for more information about a command.');
   var result = parser.parse(args);
   if(result['help'] || result.command == null){
@@ -64,12 +65,15 @@ void main(List<String> args) async {
     case "ls":
     List<FileItem> items = await repository.list();
     for(FileItem item in items){
-      print("${item.digest}\t${filesize(item.size)}\t${item.name}");
+      String fileSizeText = filesize(item.size);
+      fileSizeText = " " * (10 - fileSizeText.length) + fileSizeText;
+      print("${item.digest}  $fileSizeText  ${item.name}");
     }
     break;
     case "pull":
     int start = DateTime.now().millisecondsSinceEpoch;
-    await repository.pull(result.command.arguments[0], result.command.arguments[1]);
+    Translation translation = await repository.begin();
+    await repository.pullWithName(translation, result.command.arguments[0], result.command.arguments[1]);
     int end = DateTime.now().millisecondsSinceEpoch;
     int size = await File(result.command.arguments[1]).length();
     num time =  (end - start) / 1000;
@@ -88,8 +92,14 @@ void main(List<String> args) async {
     await auth.remove(repository);
     break;
     case "link":
-    String link = await repository.link(result.command.arguments[0]);
+    Translation translation = await repository.begin();
+    String link = await repository.linkWithName(translation, result.command.arguments[0]);
     print(link);
+    break;
+    case "rm":
+    Translation translation = await repository.begin();
+    await repository.remove(translation, result.command.arguments[0]);
+    await repository.commit(translation);
     break;
   }
   exit(0);
