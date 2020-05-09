@@ -217,7 +217,6 @@ class DrcFileListState extends State<DrcFileList> {
       child: ListView(
         children: list,
       ),
-      margin: EdgeInsets.all(10),
     );
   }
 }

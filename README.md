@@ -50,6 +50,7 @@
 
 ## :handshake: 贡献
 
+QQ群: [1073732514](https://jq.qq.com/?_wv=1027&k=5Whgj7Y)
 欢迎各种问题，需求，BUG报告和代码PR!<br />提交到这里就可以 [问题页面](https://github.com/xausky/DockerRegisterCloud/issues).
 
 ## :joy: 免责声明

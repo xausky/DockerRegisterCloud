@@ -276,7 +276,8 @@ class Repository {
       response = await request.close();
     }
     if (response.statusCode >= 400 || response.statusCode < 300) {
-      throw "Repository pull status code ${response.statusCode}";
+      print("https://${artifact.server}/v2/${artifact.name}/blobs/$hash");
+      throw "Repository pull status code ${response.statusCode} ${request.headers}";
     }
     return response.headers.value("Location");
   }
