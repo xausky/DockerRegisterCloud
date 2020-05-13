@@ -1,5 +1,10 @@
-import 'package:docker_register_cloud/model/global_model.dart';
+import 'dart:io';
+
+import 'package:docker_register_cloud/component/DrcDialogs.dart';
+import 'package:docker_register_cloud/model/GlobalModel.dart';
+import 'package:docker_register_cloud/model/TransportModel.dart';
 import 'package:docker_register_cloud/repository.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +20,8 @@ class DrcFileList extends StatefulWidget {
   }
 }
 
-class DrcFileListState extends State<DrcFileList> {
+class DrcFileListState extends State<DrcFileList>
+    with TickerProviderStateMixin {
   String path = "/";
   List<FileItem> items;
   String repository = "";
@@ -45,11 +51,29 @@ class DrcFileListState extends State<DrcFileList> {
     global.setCurrentRepository(value.split(":")[0]);
   }
 
-  onDownloadClick(FileItem item, String name) async {
+  onDownloadClick(FileItem item, String name, GlobalKey itemkey) async {
     GlobalModel global = Provider.of<GlobalModel>(context, listen: false);
-    global.link(widget.repository, item.digest).then((value) {
-      global.download(value, name);
-    }).catchError((err) {
+    TransportModel transport =
+        Provider.of<TransportModel>(context, listen: false);
+    if (transport.items.containsKey("${widget.repository}:${item.name}")) {
+      if (transport.items["${widget.repository}:${item.name}"].state !=
+          TransportStateType.COMPLETED) {
+        Scaffold.of(context).showSnackBar(SnackBar(
+          content: Text("该文件已经在下载列表不可重复下载。"),
+        ));
+        return;
+      } else {
+        if (await DrcDialogs.showConfirm(
+                "确认覆盖", "该文件已经在下载列表，是否覆盖下载？", context) !=
+            true) {
+          return;
+        }
+      }
+    }
+    try {
+      await global.download(
+          widget.repository, item.digest, item.name, transport);
+    } catch (err) {
       Scaffold.of(context).showSnackBar(SnackBar(
         content: Text("获取下载链接失败，推荐用本地客户端试试"),
         action: SnackBarAction(
@@ -59,7 +83,7 @@ class DrcFileListState extends State<DrcFileList> {
           },
         ),
       ));
-    });
+    }
   }
 
   onRefreshClick() {
@@ -79,7 +103,30 @@ class DrcFileListState extends State<DrcFileList> {
       Scaffold.of(context).showSnackBar(SnackBar(
         content: Text("获取文件列表失败，仓库不存在或者非公开。"),
       ));
+      print(err);
     });
+  }
+
+  onUploadClick() async {
+    File target = await FilePicker.getFile();
+    GlobalModel global = Provider.of<GlobalModel>(context, listen: false);
+    TransportModel transport =
+        Provider.of<TransportModel>(context, listen: false);
+    String name = this.path + target.path.split("/").last;
+    while (true) {
+      try {
+        await global.upload(widget.repository, name, target.path, transport);
+        break;
+      } on PermissionDeniedException catch (_) {
+        List<String> results =
+            await DrcDialogs.showAuthority(repository, context);
+        if (results == null) {
+          transport.removeItem("${widget.repository}:$name");
+          break;
+        }
+        await global.login(repository, results[0], results[1]);
+      }
+    }
   }
 
   @override
@@ -93,69 +140,81 @@ class DrcFileListState extends State<DrcFileList> {
     }
     myController.text = "${this.repository}:${this.path}";
     List<Widget> list = List();
-    list.add(
+    List<Widget> headers = List();
+    List<Widget> toolbar = List();
+    toolbar.add(Container(
+      child: IconButton(
+        iconSize: 32,
+        color: Theme.of(context).primaryColor,
+        icon: Icon(Icons.home),
+        onPressed: () {
+          setState(() {
+            this.path = "/";
+            updateRepositoryEditing();
+          });
+        },
+      ),
+    ));
+    toolbar.add(Container(
+      child: IconButton(
+        iconSize: 32,
+        color: Theme.of(context).primaryColor,
+        icon: Icon(Icons.keyboard_arrow_up),
+        onPressed: () {
+          setState(() {
+            int index = this.path.lastIndexOf("/", this.path.length - 2);
+            if (index == -1) {
+              this.path = "/";
+            } else {
+              this.path = this.path.substring(0, index + 1);
+            }
+          });
+          updateRepositoryEditing();
+        },
+      ),
+    ));
+    if (!kIsWeb) {
+      toolbar.add(Container(
+        child: IconButton(
+          iconSize: 32,
+          color: Theme.of(context).primaryColor,
+          icon: Icon(Icons.file_upload),
+          onPressed: () {
+            onUploadClick();
+          },
+        ),
+      ));
+    }
+    toolbar.add(Container(
+      child: IconButton(
+        iconSize: 32,
+        color: Theme.of(context).primaryColor,
+        icon: Icon(Icons.refresh),
+        onPressed: () {
+          onRefreshClick();
+        },
+      ),
+    ));
+    toolbar.add(Flexible(
+        child: TextField(
+      controller: myController,
+      style: TextStyle(
+        fontSize: 16,
+      ),
+      decoration: InputDecoration(
+          isDense: true, border: OutlineInputBorder(), labelText: '仓库地址'),
+      onSubmitted: (value) => onRepositorySubmitted(value),
+    )));
+    headers.add(
       Container(
           margin: EdgeInsets.all(8),
           height: 46,
           child: Row(
-            children: [
-              Container(
-                child: IconButton(
-                  iconSize: 32,
-                  color: Theme.of(context).primaryColor,
-                  icon: Icon(Icons.home),
-                  onPressed: () {
-                    setState(() {
-                      this.path = "/";
-                      updateRepositoryEditing();
-                    });
-                  },
-                ),
-              ),
-              Container(
-                child: IconButton(
-                  iconSize: 32,
-                  color: Theme.of(context).primaryColor,
-                  icon: Icon(Icons.keyboard_arrow_up),
-                  onPressed: () {
-                    setState(() {
-                      int index =
-                          this.path.lastIndexOf("/", this.path.length - 2);
-                      if (index == -1) {
-                        this.path = "/";
-                      } else {
-                        this.path = this.path.substring(0, index + 1);
-                      }
-                    });
-                    updateRepositoryEditing();
-                  },
-                ),
-              ),
-              Container(
-                child: IconButton(
-                  iconSize: 32,
-                  color: Theme.of(context).primaryColor,
-                  icon: Icon(Icons.refresh),
-                  onPressed: () {
-                    onRefreshClick();
-                  },
-                ),
-              ),
-              Flexible(
-                  child: TextField(
-                controller: myController,
-                style: TextStyle(
-                  fontSize: 16,
-                ),
-                decoration: InputDecoration(
-                    border: OutlineInputBorder(), labelText: '仓库地址'),
-                onSubmitted: (value) => onRepositorySubmitted(value),
-              ))
-            ],
+            children: toolbar,
           )),
     );
     if (items == null) {
-      list.add(SizedBox(
+      headers.add(SizedBox(
         child: LinearProgressIndicator(),
         height: 4,
       ));
@@ -190,6 +249,7 @@ class DrcFileListState extends State<DrcFileList> {
         }
       });
       items.forEach((element) {
+        Key itemkey = GlobalKey();
         String name = element.name;
         if (!name.startsWith("/")) {
           name = "/$name";
@@ -200,9 +260,10 @@ class DrcFileListState extends State<DrcFileList> {
             list.add(
               InkWell(
                   onTap: () {
-                    onDownloadClick(element, name);
+                    onDownloadClick(element, name, itemkey);
                   },
                   child: FileItemView(
+                    key: itemkey,
                     name: name,
                     size: element.size,
                     digest: element.digest,
@@ -213,10 +274,15 @@ class DrcFileListState extends State<DrcFileList> {
         }
       });
     }
-    return Container(
+
+    headers.add(Expanded(
       child: ListView(
         children: list,
       ),
+    ));
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      children: headers,
     );
   }
 }

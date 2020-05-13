@@ -1,38 +1,133 @@
-import 'package:docker_register_cloud/component/file_list.dart';
-import 'package:docker_register_cloud/model/global_model.dart';
+import 'package:docker_register_cloud/component/DrcFileList.dart';
+import 'package:docker_register_cloud/component/DrcTransportList.dart';
+import 'package:docker_register_cloud/model/GlobalModel.dart';
+import 'package:docker_register_cloud/model/TransportModel.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 void main() => runApp(DrcApp());
 
 class DrcApp extends StatelessWidget {
+  bool requestPermission = false;
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<GlobalModel>(
-        create: (_) => GlobalModel.instance(),
-        child: MaterialApp(
-          title: 'Docker Register Cloud',
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-          ),
-          home: HomePage(title: 'Docker Register Cloud'),
-        ));
+    if (!requestPermission) {
+      requestPermission = true;
+      Permission.storage.request().then((value) {
+        if (PermissionStatus.granted != value) {
+          SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+        }
+      });
+    }
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<GlobalModel>(
+          create: (_) => GlobalModel.instance(),
+        ),
+        ChangeNotifierProvider<TransportModel>(
+          create: (_) => TransportModel(),
+        )
+      ],
+      child: MaterialApp(
+        title: 'Docker Register Cloud',
+        theme: ThemeData(
+          fontFamily: 'WenQuanYi Micro Hei',
+          primarySwatch: Colors.blue,
+        ),
+        home: HomePage(title: 'Docker Register Cloud'),
+      ),
+    );
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   final String title;
-  HomePage({Key key, this.title}) : super(key: key);
+
+  const HomePage({Key key, this.title}) : super(key: key);
+  @override
+  State<StatefulWidget> createState() {
+    return HomePageState();
+  }
+}
+
+class HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+  List<Widget> _widgetOptions = <Widget>[null, null, null];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    int activeTransportCount = 0;
+    context.watch<TransportModel>().items.forEach((key, value) {
+      if (value.state != TransportStateType.COMPLETED) {
+        activeTransportCount++;
+      }
+    });
     return Scaffold(
       appBar: AppBar(
-        title: Text(this.title),
+        title: Text(widget.title),
       ),
-      body: DrcFileList(context.watch<GlobalModel>().config.currentRepository),
+      body: IndexedStack(
+        children: <Widget>[
+          DrcFileList(context.watch<GlobalModel>().config.currentRepository),
+          Column(),
+          DrcTransportList(),
+        ],
+        index: _selectedIndex,
+      ),
+      bottomNavigationBar: kIsWeb
+          ? null
+          : BottomNavigationBar(
+              items: <BottomNavigationBarItem>[
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home),
+                  title: Text('浏览'),
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.business),
+                  title: Text('仓库'),
+                ),
+                BottomNavigationBarItem(
+                  icon: Stack(
+                    overflow: Overflow.visible,
+                    children: <Widget>[
+                      Icon(Icons.cloud_download),
+                      activeTransportCount == 0
+                          ? Column()
+                          : Positioned(
+                              top: -1.0,
+                              right: -6.0,
+                              child: new Container(
+                                decoration: new BoxDecoration(
+                                    borderRadius:
+                                        new BorderRadius.circular(4.0),
+                                    color: Colors.red),
+                                width: 16.0,
+                                child: new Text(
+                                  "$activeTransportCount",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ))
+                    ],
+                  ),
+                  title: Text('下载'),
+                ),
+              ],
+              currentIndex: _selectedIndex,
+              selectedItemColor: Theme.of(context).primaryColor,
+              onTap: _onItemTapped,
+            ),
     );
   }
 }

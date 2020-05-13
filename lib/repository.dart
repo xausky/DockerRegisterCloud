@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:docker_register_cloud/auth.dart';
 import 'package:docker_register_cloud/app.dart';
-import 'package:filesize/filesize.dart';
 
 class Repository {
   AuthManager auth;
@@ -43,6 +42,9 @@ class Repository {
       request.headers.set("User-Agent", config.userAgent);
       request.headers.set("Authorization", "Bearer $token");
       response = await request.close();
+    }
+    if (response.statusCode == 401){
+      throw PermissionDeniedException(config.currentRepository);
     }
     if (response.statusCode >= 300 || response.statusCode < 200) {
       print(request.method);
@@ -109,7 +111,7 @@ class Repository {
     translation.config.fileItems.remove(target);
   }
 
-  Future<void> pullWithName(Translation translation, String name, String path) async {
+  Future<void> pullWithName(Translation translation, String name, String path, TransportProgressListener listener) async {
     FileItem target;
     for(FileItem item in translation.config.fileItems){
       if(item.name == name){
@@ -119,7 +121,7 @@ class Repository {
     if(target == null){
       throw "File item not found $name";
     }
-    await pull(target.digest, path);
+    await pull(target.digest, path, listener);
   }
 
   Future<String> linkWithName(Translation translation, String name) async {
@@ -135,7 +137,7 @@ class Repository {
     return await link(target.digest);
   }
 
-  Future<void> upload(Translation translation, String name, String path) async {
+  Future<void> upload(Translation translation, String name, String path, TransportProgressListener listener) async {
     String url = await beginUpload(translation);
     String hash =
         (await sha256.bind(File(path).openRead()).firstWhere((d) => true))
@@ -151,13 +153,9 @@ class Repository {
     request.contentLength = await File(path).length();
     var length = await File(path).length();
     var sink = File(path).openRead();
-    var start = DateTime.now().millisecondsSinceEpoch;
     var received = 0;
-    Timer.periodic(Duration(milliseconds: 500), (timer) {
-      var current = DateTime.now().millisecondsSinceEpoch;
-      var speed = (received / (current - start) * 1000).round();
-      print(
-          "Uploading $name received ${filesize(received)} total ${filesize(length)} speed ${filesize(speed)}/s");
+    var timer = Timer.periodic(Duration(milliseconds: 500), (timer) {
+      listener.onProgess(received, length);
     });
     await request.addStream(sink.map((s) {
       received += s.length;
@@ -168,6 +166,8 @@ class Repository {
       String body = await response.transform(utf8.decoder).join();
       throw "Repository upload status code ${response.statusCode} ${response.headers} $body";
     }
+    timer.cancel();
+    listener.onSuccess(length);
     FileItem fileItem = FileItem();
     fileItem.name = name;
     fileItem.size = request.contentLength;
@@ -282,7 +282,7 @@ class Repository {
     return response.headers.value("Location");
   }
 
-  Future<void> pull(String hash, String path) async {
+  Future<void> pull(String hash, String path, TransportProgressListener listener) async {
     RepositoryArtifact artifact = sovleRepository(config.currentRepository);
     HttpClient httpClient = HttpClient();
     HttpClientRequest request = await httpClient.getUrl(Uri.parse(
@@ -303,18 +303,16 @@ class Repository {
       throw "Repository pull status code ${response.statusCode}";
     }
     var length = response.contentLength;
-    var start = DateTime.now().millisecondsSinceEpoch;
     var received = 0;
-    Timer.periodic(Duration(milliseconds: 500), (timer) {
-      var current = DateTime.now().millisecondsSinceEpoch;
-      var speed = (received / (current - start) * 1000).round();
-      print(
-          "Downloading $path received ${filesize(received)} total ${filesize(length)} speed ${filesize(speed)}/s");
+    var timer = Timer.periodic(Duration(milliseconds: 500), (timer) {
+      listener.onProgess(received, length);
     });
     await response.map((s) {
       received += s.length;
       return s;
     }).pipe(File(path).openWrite());
+    timer.cancel();
+    listener.onSuccess(length);
   }
 
   static RepositoryArtifact sovleRepository(String repository) {
@@ -342,6 +340,19 @@ class Repository {
     result.name = name;
     return result;
   }
+
+}
+
+class PermissionDeniedException {
+  final String repository;
+
+  PermissionDeniedException(this.repository);
+
+}
+
+abstract class TransportProgressListener {
+  void onSuccess(int total);
+  void onProgess(int currnt, int total);
 }
 
 class RepositoryArtifact {
