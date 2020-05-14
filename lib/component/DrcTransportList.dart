@@ -15,7 +15,7 @@ class DrcTransportList extends StatefulWidget {
 class DrcTransportListState extends State<DrcTransportList> {
 
   onOpen(String path){
-    Provider.of<GlobalModel>(context, listen: false).open(path);
+    Provider.of<UIPlatform>(context, listen: false).open(path);
   }
 
   @override

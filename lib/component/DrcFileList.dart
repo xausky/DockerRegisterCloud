@@ -47,12 +47,12 @@ class DrcFileListState extends State<DrcFileList>
   }
 
   onRepositorySubmitted(String value) async {
-    GlobalModel global = Provider.of<GlobalModel>(context, listen: false);
-    global.setCurrentRepository(value.split(":")[0]);
+    UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
+    platform.setCurrentRepository(value.split(":")[0]);
   }
 
   onDownloadClick(FileItem item, String name, GlobalKey itemkey) async {
-    GlobalModel global = Provider.of<GlobalModel>(context, listen: false);
+    UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
     TransportModel transport =
         Provider.of<TransportModel>(context, listen: false);
     if (transport.items.containsKey("${widget.repository}:${item.name}")) {
@@ -71,7 +71,7 @@ class DrcFileListState extends State<DrcFileList>
       }
     }
     try {
-      await global.download(
+      await platform.download(
           widget.repository, item.digest, item.name, transport);
     } catch (err) {
       Scaffold.of(context).showSnackBar(SnackBar(
@@ -87,7 +87,7 @@ class DrcFileListState extends State<DrcFileList>
   }
 
   onRefreshClick() {
-    GlobalModel global = Provider.of<GlobalModel>(context, listen: false);
+    UIPlatform global = Provider.of<UIPlatform>(context, listen: false);
     setState(() {
       items = null;
     });
@@ -109,13 +109,17 @@ class DrcFileListState extends State<DrcFileList>
 
   onUploadClick() async {
     File target = await FilePicker.getFile();
-    GlobalModel global = Provider.of<GlobalModel>(context, listen: false);
+    print(target);
+    if(target == null || ! await target.exists()){
+      return;
+    }
+    UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
     TransportModel transport =
         Provider.of<TransportModel>(context, listen: false);
     String name = this.path + target.path.split("/").last;
     while (true) {
       try {
-        await global.upload(widget.repository, name, target.path, transport);
+        await platform.upload(widget.repository, name, target.path, transport);
         break;
       } on PermissionDeniedException catch (_) {
         List<String> results =
@@ -124,7 +128,7 @@ class DrcFileListState extends State<DrcFileList>
           transport.removeItem("${widget.repository}:$name");
           break;
         }
-        await global.login(repository, results[0], results[1]);
+        await platform.login(repository, results[0], results[1]);
       }
     }
   }
@@ -341,8 +345,8 @@ class FileItemViewState extends State<FileItemView> {
                   color: Theme.of(context).primaryColor,
                   icon: Icon(Icons.content_copy),
                   onPressed: () async {
-                    GlobalModel global =
-                        Provider.of<GlobalModel>(context, listen: false);
+                    UIPlatform global =
+                        Provider.of<UIPlatform>(context, listen: false);
                     global.writeClipy(widget.name);
                     Scaffold.of(context).showSnackBar(SnackBar(
                       content: Text("复制文件名成功"),
@@ -356,8 +360,8 @@ class FileItemViewState extends State<FileItemView> {
                   color: Theme.of(context).primaryColor,
                   icon: Icon(Icons.link),
                   onPressed: () async {
-                    GlobalModel global =
-                        Provider.of<GlobalModel>(context, listen: false);
+                    UIPlatform global =
+                        Provider.of<UIPlatform>(context, listen: false);
                     global
                         .link(global.config.currentRepository, widget.digest)
                         .then((value) {

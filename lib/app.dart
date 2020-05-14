@@ -1,43 +1,38 @@
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:json_annotation/json_annotation.dart';
+
+part 'app.g.dart';
+
+class BasePlatform {
+  Future<dynamic> load(String key) async {
+    String userHome = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+    if (!await Directory("$userHome/.drc").exists()) {
+      await Directory("$userHome/.drc").create();
+    }
+    if (await File("$userHome/.drc/$key.json").exists()) {
+      String content = await File("$userHome/.drc/$key.json").readAsString();
+      return json.decode(content);
+    }
+  }
+
+  Future<void> save(String key, Object object) async {
+    String userHome =
+        Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
+    await File("$userHome/.drc/config.json").writeAsString(jsonEncode(object));
+  }
+}
+
+@JsonSerializable()
 class GlobalConfig {
-  String userAgent;
+  String userAgent = "Docker-Client/19.03.8-ce (linux)";
   String currentRepository;
   Map<String, String> repositoryCretificates = Map();
 
   GlobalConfig();
 
-  Future<void> load() async {
-    String userHome = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-    if(! await Directory("$userHome/.drc").exists()){
-      await Directory("$userHome/.drc").create();
-    }
-    if(await File("$userHome/.drc/config.json").exists()){
-      String content = await File("$userHome/.drc/config.json").readAsString();
-      fromJson(jsonDecode(content));
-    } else {
-      this.userAgent = "Docker-Client/19.03.8-ce (linux)";
-      await save();
-    }
-  }
-
-  Future<void> save() async {
-    String userHome = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-    await File("$userHome/.drc/config.json").writeAsString(jsonEncode(this));
-  }
-
-  fromJson(Map<String, dynamic> json) {
-    this.userAgent = json["userAgent"];
-    this.currentRepository = json["currentRepository"];
-    this.repositoryCretificates = Map.from(json["repositoryCretificates"]);
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['userAgent'] = this.userAgent;
-    data['currentRepository'] = this.currentRepository;
-    data['repositoryCretificates'] = this.repositoryCretificates;
-    return data;
-  }
+  factory GlobalConfig.fromJson(Map<String, dynamic> json) =>
+      _$GlobalConfigFromJson(json);
+  Map<String, dynamic> toJson() => _$GlobalConfigToJson(this);
 }

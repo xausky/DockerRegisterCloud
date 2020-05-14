@@ -5,8 +5,9 @@ import 'package:docker_register_cloud/model/TransportModel.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:clippy/server.dart' as clipy;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:open_file/open_file.dart';
 
-class NativeGlobalModel extends GlobalModel {
+class NativeUIPlatform extends UIPlatform {
   @override
   Future<String> link(String repository, String digest) async {
     return Repository(config, auth).link(digest);
@@ -67,11 +68,19 @@ class NativeGlobalModel extends GlobalModel {
   @override
   Future<void> open(String path) {
     String parent = path.substring(0, path.lastIndexOf("/"));
-    launch("file://$parent");
+    if(Platform.isLinux){
+      Process.run('xdg-open', [parent]);
+    } else if(Platform.isWindows){
+      Process.run('start', [parent]);
+    } else if(Platform.isMacOS){
+      Process.run('open', [parent]);
+    } else {
+      OpenFile.open(path);
+    } 
   }
 }
 
-GlobalModel instanceOfGlobalModel() => NativeGlobalModel();
+UIPlatform instanceOfGlobalModel() => NativeUIPlatform();
 
 class ModelDownloadTransportProgressListener extends TransportProgressListener {
   final String name;

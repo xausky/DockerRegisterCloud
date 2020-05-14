@@ -275,6 +275,7 @@ class Repository {
       request.followRedirects = false;
       response = await request.close();
     }
+    response.drain();
     if (response.statusCode >= 400 || response.statusCode < 300) {
       print("https://${artifact.server}/v2/${artifact.name}/blobs/$hash");
       throw "Repository pull status code ${response.statusCode} ${request.headers}";

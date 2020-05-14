@@ -7,6 +7,7 @@ import 'package:docker_register_cloud/repository.dart';
 import 'package:file/local.dart';
 
 main() async {
+  BasePlatform platform = BasePlatform();
   var app = Angel();
   var fs = LocalFileSystem();
   var http = AngelHttp(app);
@@ -16,7 +17,7 @@ main() async {
     String repository = req.queryParameters['repository'];
     GlobalConfig config = GlobalConfig();
     config.currentRepository = repository;
-    AuthManager auth = AuthManager(config);
+    AuthManager auth = AuthManager(platform, config);
     List<FileItem> items = await Repository(config, auth).list();
     res.json(items);
     res.headers["Content-Type"] = "application/json; charset=utf-8";
@@ -26,7 +27,7 @@ main() async {
     String digest = req.queryParameters['digest'];
     GlobalConfig config = GlobalConfig();
     config.currentRepository = repository;
-    AuthManager auth = AuthManager(config);
+    AuthManager auth = AuthManager(platform, config);
     String link = await Repository(config, auth).link(digest);
     res.json({"link": link});
     res.headers["Content-Type"] = "application/json; charset=utf-8";

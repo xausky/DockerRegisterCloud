@@ -9,19 +9,23 @@ import 'package:docker_register_cloud/model/GlobalModel.dart'
     if (dart.library.io) 'package:docker_register_cloud/model/NativeGlobalModel.dart'
     if (dart.library.html) 'package:docker_register_cloud/model/WebGlobalModel.dart' as gm;
     
-abstract class GlobalModel extends ChangeNotifier {
-  UIGlobalConfig config;
+abstract class UIPlatform extends ChangeNotifier with BasePlatform {
+  static UIPlatform _instance;
+  GlobalConfig config;
   AuthManager auth;
 
-  GlobalModel() {
-    config  = UIGlobalConfig();
-    auth = AuthManager(config);
-    config.load().then((value) => notifyListeners());
+  UIPlatform() {
+    config  = GlobalConfig();
+    auth = AuthManager(this, config);
+    load('config').then((value) {
+      config = GlobalConfig.fromJson(value);
+      notifyListeners();
+    });
   }
 
   setCurrentRepository(String repository) {
     this.config.currentRepository = repository;
-    this.config.save();
+    save('config', config);
     this.notifyListeners();
   }
 
@@ -32,36 +36,28 @@ abstract class GlobalModel extends ChangeNotifier {
   Future<void> upload(String repository, name, path, TransportModel transport);
   Future<void> open(String path);
   void writeClipy(String content);
-  static GlobalModel instance(){
-    return gm.instanceOfGlobalModel();
-  }
-}
 
-GlobalModel instanceOfGlobalModel(){
-  throw "Unsupported";
-}
-
-class UIGlobalConfig extends GlobalConfig {
-  String userAgent;
-  String currentRepository;
-  Map<String, String> repositoryCretificates = Map();
-
-  UIGlobalConfig();
-
-  Future<void> load() async {
+  Future<dynamic> load(String key) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    if (preferences.containsKey("config")) {
-      String content = preferences.getString("config");
-      print(content);
-      fromJson(jsonDecode(content));
-    } else {
-      this.userAgent = "Docker-Client/19.03.8-ce (linux)";
-      await save();
+    if (preferences.containsKey(key)) {
+      String content = preferences.getString(key);
+      return json.decode(content);
     }
   }
 
-  Future<void> save() async {
+  Future<void> save(String key, Object object) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.setString("config", jsonEncode(this));
+    await preferences.setString(key, jsonEncode(object));
   }
+
+  static UIPlatform instance(){
+    if(_instance == null){
+      _instance = gm.instanceOfGlobalModel();
+    }
+    return _instance;
+  }
+}
+
+UIPlatform instanceOfGlobalModel(){
+  throw "Unsupported";
 }

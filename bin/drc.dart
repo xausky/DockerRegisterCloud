@@ -7,9 +7,9 @@ import 'package:docker_register_cloud/repository.dart';
 import 'package:filesize/filesize.dart';
 
 void main(List<String> args) async {
-  GlobalConfig config = GlobalConfig();
-  await config.load();
-  AuthManager auth = AuthManager(config);
+  BasePlatform platform = BasePlatform();
+  GlobalConfig config = GlobalConfig.fromJson(await platform.load('config')) ;
+  AuthManager auth = AuthManager(platform, config);
   Repository repository = Repository(config, auth);
   ArgParser parser = ArgParser();
   parser.addFlag('help',

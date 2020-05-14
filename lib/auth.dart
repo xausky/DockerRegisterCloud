@@ -5,14 +5,13 @@ import 'package:docker_register_cloud/app.dart';
 import 'package:docker_register_cloud/repository.dart';
 
 class AuthManager {
-  GlobalConfig config;
-  AuthManager(GlobalConfig config){
-    this.config = config;
-  }
+  final BasePlatform platform;
+  final GlobalConfig config;
+  AuthManager(this.platform, this.config);
 
   Future<void> use(String repository) async {
     config.currentRepository = repository;
-    await config.save();
+    await platform.save('config', config);
   }
 
   Future<void> remove(String repository) async {
@@ -20,7 +19,7 @@ class AuthManager {
     if(config.currentRepository == repository){
       config.currentRepository = null;
     }
-    await config.save();
+    await platform.save('config', config);
   }
 
   Future<void> list() async {
@@ -44,7 +43,7 @@ class AuthManager {
         config.repositoryCretificates.remove(repository);
       } else {
         config.currentRepository = repository;
-        await config.save();
+        await platform.save('config', config);
         return token;
       }
     }

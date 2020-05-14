@@ -26,8 +26,8 @@ class DrcApp extends StatelessWidget {
     }
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<GlobalModel>(
-          create: (_) => GlobalModel.instance(),
+        ChangeNotifierProvider<UIPlatform>(
+          create: (_) => UIPlatform.instance(),
         ),
         ChangeNotifierProvider<TransportModel>(
           create: (_) => TransportModel(),
@@ -79,7 +79,7 @@ class HomePageState extends State<HomePage> {
       ),
       body: IndexedStack(
         children: <Widget>[
-          DrcFileList(context.watch<GlobalModel>().config.currentRepository),
+          DrcFileList(context.watch<UIPlatform>().config.currentRepository),
           Column(),
           DrcTransportList(),
         ],

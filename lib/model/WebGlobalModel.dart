@@ -7,8 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:clippy/browser.dart' as clipy;
 import 'package:docker_register_cloud/repository.dart';
 
-class WebGlobalModel extends GlobalModel {
-  UIGlobalConfig config = UIGlobalConfig();
+class WebUIPlatform extends UIPlatform {
   @override
   Future<String> link(String repository, String digest) async {
     var response =
@@ -57,4 +56,4 @@ class WebGlobalModel extends GlobalModel {
   Future<void> open(String path) {}
 }
 
-GlobalModel instanceOfGlobalModel() => WebGlobalModel();
+UIPlatform instanceOfGlobalModel() => WebUIPlatform();
