@@ -13,18 +13,35 @@ abstract class UIPlatform extends ChangeNotifier with BasePlatform {
   static UIPlatform _instance;
   GlobalConfig config;
   AuthManager auth;
+  int selectedIndex = 0;
 
   UIPlatform() {
     config  = GlobalConfig();
     auth = AuthManager(this, config);
     load('config').then((value) {
       config = GlobalConfig.fromJson(value);
+      auth = AuthManager(this, config);
       notifyListeners();
     });
   }
 
+  setCurrentSelectIndex(int index){
+    selectedIndex = index;
+    notifyListeners();
+  }
+
   setCurrentRepository(String repository) {
     this.config.currentRepository = repository;
+    this.config.repositoryCretificates.putIfAbsent(repository, () => null);
+    save('config', config);
+    this.notifyListeners();
+  }
+
+  removeRepository(String repository){
+    if(this.config.currentRepository == repository){
+      this.config.currentRepository = null;
+    }
+    this.config.repositoryCretificates.remove(repository);
     save('config', config);
     this.notifyListeners();
   }
@@ -34,7 +51,9 @@ abstract class UIPlatform extends ChangeNotifier with BasePlatform {
   Future<void> login(String repository, String username, String password);
   Future<void> download(String repository, digest, name, TransportModel transport);
   Future<void> upload(String repository, name, path, TransportModel transport);
+  Future<void> remove(String name);
   Future<void> open(String path);
+
   void writeClipy(String content);
 
   Future<dynamic> load(String key) async {

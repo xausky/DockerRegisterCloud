@@ -71,11 +71,11 @@ class TransportItemViewState extends State<TransportItemView> {
 
     return Card(
       margin: EdgeInsets.all(8),
-      child: Row(
+      child: Column(children: <Widget>[Row(
         children: [
           Icon(
             icon,
-            size: 48,
+            size: 42,
             color: Theme.of(context).primaryColor,
           ),
           Expanded(
@@ -91,7 +91,9 @@ class TransportItemViewState extends State<TransportItemView> {
                 Container(
                   margin: EdgeInsets.all(4),
                   child: Text(
-                      "${filesize(widget.item.current)} - ${filesize(widget.item.total)} - ${filesize(speed)}/s",
+                    widget.item.state == TransportStateType.TRANSPORTING?
+                      "${filesize(widget.item.current)} - ${filesize(widget.item.total)} - ${filesize(speed)}/s":
+                      "${filesize(widget.item.total)} - ${filesize(speed)}/s",
                       textAlign: TextAlign.left),
                 )
               ],
@@ -99,7 +101,7 @@ class TransportItemViewState extends State<TransportItemView> {
             ),
           ),
         ],
-      ),
+      ),widget.item.state == TransportStateType.TRANSPORTING?LinearProgressIndicator(value: widget.item.current / widget.item.total,):Column()],) 
     );
   }
 }

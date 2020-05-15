@@ -1,4 +1,5 @@
 import 'package:docker_register_cloud/component/DrcFileList.dart';
+import 'package:docker_register_cloud/component/DrcRepositoryList.dart';
 import 'package:docker_register_cloud/component/DrcTransportList.dart';
 import 'package:docker_register_cloud/model/GlobalModel.dart';
 import 'package:docker_register_cloud/model/TransportModel.dart';
@@ -38,6 +39,7 @@ class DrcApp extends StatelessWidget {
         theme: ThemeData(
           fontFamily: 'WenQuanYi Micro Hei',
           primarySwatch: Colors.blue,
+          primaryColorLight: Colors.blueGrey
         ),
         home: HomePage(title: 'Docker Register Cloud'),
       ),
@@ -56,15 +58,6 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
-  List<Widget> _widgetOptions = <Widget>[null, null, null];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     int activeTransportCount = 0;
@@ -80,10 +73,10 @@ class HomePageState extends State<HomePage> {
       body: IndexedStack(
         children: <Widget>[
           DrcFileList(context.watch<UIPlatform>().config.currentRepository),
-          Column(),
+          DrcRepositoryList(),
           DrcTransportList(),
         ],
-        index: _selectedIndex,
+        index: context.watch<UIPlatform>().selectedIndex,
       ),
       bottomNavigationBar: kIsWeb
           ? null
@@ -124,9 +117,9 @@ class HomePageState extends State<HomePage> {
                   title: Text('下载'),
                 ),
               ],
-              currentIndex: _selectedIndex,
+              currentIndex: context.watch<UIPlatform>().selectedIndex,
               selectedItemColor: Theme.of(context).primaryColor,
-              onTap: _onItemTapped,
+              onTap: (index) => context.read<UIPlatform>().setCurrentSelectIndex(index),
             ),
     );
   }

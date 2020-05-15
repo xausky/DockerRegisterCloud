@@ -62,9 +62,9 @@ class NativeUIPlatform extends UIPlatform {
   }
 
   @override
-  Future<void> login(
-      String repository, String username, String password) async {
+  Future<void> login(String repository, String username, String password) async {
     await auth.login(repository, username, password);
+    notifyListeners();
   }
 
   @override
@@ -84,6 +84,14 @@ class NativeUIPlatform extends UIPlatform {
     } else {
       OpenFile.open(path);
     } 
+  }
+
+  @override
+  Future<void> remove(String name) async {
+    Repository repo = Repository(config, auth);
+    Translation translation = await repo.begin();
+    await repo.remove(translation, name);
+    await repo.commit(translation);
   }
 }
 

@@ -408,7 +408,7 @@ class FileItem {
   String name;
   String digest;
 
-  FileItem();
+  FileItem({this.name, this.size, this.digest});
 
   FileItem.fromJson(Map<String, dynamic> json) {
     this.name = json["name"];

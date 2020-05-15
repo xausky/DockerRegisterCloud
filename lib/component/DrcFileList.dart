@@ -26,13 +26,13 @@ class DrcFileListState extends State<DrcFileList>
   List<FileItem> items;
   String repository = "";
 
-  final myController = TextEditingController();
+  final repositoryController = TextEditingController();
 
   @override
   void dispose() {
     // Clean up the controller when the widget is removed from the
     // widget tree.
-    myController.dispose();
+    repositoryController.dispose();
     super.dispose();
   }
 
@@ -43,7 +43,7 @@ class DrcFileListState extends State<DrcFileList>
   }
 
   updateRepositoryEditing() {
-    myController.text = "${widget.repository}:${this.path}";
+    repositoryController.text = "${widget.repository}:${this.path}";
   }
 
   onRepositorySubmitted(String value) async {
@@ -59,7 +59,10 @@ class DrcFileListState extends State<DrcFileList>
       if (transport.items["${widget.repository}:${item.name}"].state !=
           TransportStateType.COMPLETED) {
         Scaffold.of(context).showSnackBar(SnackBar(
-          content: Text("该文件已经在下载列表不可重复下载。"),
+          content: Text(
+            "该文件已经在下载列表不可重复下载。",
+            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei']),
+          ),
         ));
         return;
       } else {
@@ -75,7 +78,8 @@ class DrcFileListState extends State<DrcFileList>
           widget.repository, item.digest, item.name, transport);
     } catch (err) {
       Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text("获取下载链接失败，推荐用本地客户端试试"),
+        content: Text("获取下载链接失败，推荐用本地客户端试试",
+            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
         action: SnackBarAction(
           label: "下载客户端",
           onPressed: () {
@@ -101,7 +105,8 @@ class DrcFileListState extends State<DrcFileList>
         items = [];
       });
       Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text("获取文件列表失败，仓库不存在或者非公开。"),
+        content: Text("获取文件列表失败，仓库不存在或者非公开。",
+            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
       ));
       print(err);
     });
@@ -110,7 +115,7 @@ class DrcFileListState extends State<DrcFileList>
   onUploadClick() async {
     File target = await FilePicker.getFile();
     print(target);
-    if(target == null || ! await target.exists()){
+    if (target == null || !await target.exists()) {
       return;
     }
     UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
@@ -120,6 +125,7 @@ class DrcFileListState extends State<DrcFileList>
     while (true) {
       try {
         await platform.upload(widget.repository, name, target.path, transport);
+        onRefreshClick();
         break;
       } on PermissionDeniedException catch (_) {
         List<String> results =
@@ -140,9 +146,10 @@ class DrcFileListState extends State<DrcFileList>
       onRefreshClick();
     }
     if (widget.repository == null) {
+      this.repository = "";
       items = [];
     }
-    myController.text = "${this.repository}:${this.path}";
+    repositoryController.text = "${this.repository}:${this.path}";
     List<Widget> list = List();
     List<Widget> headers = List();
     List<Widget> toolbar = List();
@@ -188,6 +195,21 @@ class DrcFileListState extends State<DrcFileList>
           },
         ),
       ));
+      toolbar.add(Container(
+        child: IconButton(
+          iconSize: 32,
+          color: Theme.of(context).primaryColor,
+          icon: Icon(Icons.add_box),
+          onPressed: () async {
+            String name = await DrcDialogs.showInput("输入文件夹名称", context);
+            if (name != null) {
+              setState(() {
+                items.add(FileItem(name: '$name/'));
+              });
+            }
+          },
+        ),
+      ));
     }
     toolbar.add(Container(
       child: IconButton(
@@ -201,7 +223,7 @@ class DrcFileListState extends State<DrcFileList>
     ));
     toolbar.add(Flexible(
         child: TextField(
-      controller: myController,
+      controller: repositoryController,
       style: TextStyle(
         fontSize: 16,
       ),
@@ -234,13 +256,13 @@ class DrcFileListState extends State<DrcFileList>
           if (name.indexOf("/") != -1) {
             name = name.substring(0, name.indexOf("/"));
             if (dirs.add(name)) {
-              print(name);
               list.add(
                 InkWell(
                     onTap: () {
                       setState(() {
                         this.path = "$path$name/";
-                        myController.text = "${widget.repository}:${this.path}";
+                        repositoryController.text =
+                            "${widget.repository}:${this.path}";
                       });
                     },
                     child: FileItemView(
@@ -260,7 +282,8 @@ class DrcFileListState extends State<DrcFileList>
         }
         if (name.startsWith(path)) {
           name = name.substring(path.length);
-          if (name.indexOf("/") == -1) {
+          print(name);
+          if (name.indexOf("/") == -1 && name.isNotEmpty) {
             list.add(
               InkWell(
                   onTap: () {
@@ -272,6 +295,20 @@ class DrcFileListState extends State<DrcFileList>
                     size: element.size,
                     digest: element.digest,
                     directory: false,
+                    onDelete: () async {
+                      if (await DrcDialogs.showConfirm(
+                          "确认删除", "确定删除文件[$name]", context)) {
+                        await context.read<UIPlatform>().remove(element.name);
+                        setState(() {
+                          items.remove(element);
+                        });
+                        Scaffold.of(context).showSnackBar(SnackBar(
+                          content: Text("删除文件成功",
+                              style: TextStyle(
+                                  fontFamilyFallback: ['WenQuanYi Micro Hei'])),
+                        ));
+                      }
+                    },
                   )),
             );
           }
@@ -296,9 +333,15 @@ class FileItemView extends StatefulWidget {
   final String name;
   final String digest;
   final int size;
+  final Function onDelete;
 
   const FileItemView(
-      {Key key, this.directory, this.name, this.size, this.digest})
+      {Key key,
+      this.directory,
+      this.name,
+      this.size,
+      this.digest,
+      this.onDelete})
       : super(key: key);
   @override
   State<StatefulWidget> createState() {
@@ -315,10 +358,10 @@ class FileItemViewState extends State<FileItemView> {
         children: [
           Icon(
             widget.directory ? Icons.folder : Icons.insert_drive_file,
-            size: 48,
+            size: 42,
             color: widget.directory
-                ? Theme.of(context).primaryColorLight
-                : Theme.of(context).primaryColor,
+                ? Theme.of(context).primaryColor
+                : Theme.of(context).primaryColorLight,
           ),
           Expanded(
             child: Column(
@@ -349,7 +392,9 @@ class FileItemViewState extends State<FileItemView> {
                         Provider.of<UIPlatform>(context, listen: false);
                     global.writeClipy(widget.name);
                     Scaffold.of(context).showSnackBar(SnackBar(
-                      content: Text("复制文件名成功"),
+                      content: Text("复制文件名成功",
+                          style: TextStyle(
+                              fontFamilyFallback: ['WenQuanYi Micro Hei'])),
                     ));
                   },
                   tooltip: "复制文件名",
@@ -367,11 +412,15 @@ class FileItemViewState extends State<FileItemView> {
                         .then((value) {
                       global.writeClipy(value);
                       Scaffold.of(context).showSnackBar(SnackBar(
-                        content: Text("复制下载链接成功"),
+                        content: Text("复制下载链接成功",
+                            style: TextStyle(
+                                fontFamilyFallback: ['WenQuanYi Micro Hei'])),
                       ));
                     }).catchError((err) {
                       Scaffold.of(context).showSnackBar(SnackBar(
-                        content: Text("获取下载链接失败，推荐用本地客户端试试"),
+                        content: Text("获取下载链接失败，推荐用本地客户端试试",
+                            style: TextStyle(
+                                fontFamilyFallback: ['WenQuanYi Micro Hei'])),
                         action: SnackBarAction(
                           label: "下载客户端",
                           onPressed: () {
@@ -383,6 +432,14 @@ class FileItemViewState extends State<FileItemView> {
                     });
                   },
                   tooltip: "复制下载链接",
+                ),
+          widget.directory
+              ? Column()
+              : IconButton(
+                  color: Theme.of(context).primaryColor,
+                  icon: Icon(Icons.delete),
+                  onPressed: widget.onDelete,
+                  tooltip: "删除文件",
                 ),
         ],
       ),

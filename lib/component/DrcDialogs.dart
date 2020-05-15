@@ -56,6 +56,42 @@ class DrcDialogs {
     );
   }
 
+  static Future<String> showInput(
+      String title, BuildContext context) async {
+    String input;
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Container(
+            margin: EdgeInsets.all(4),
+            child: TextField(
+              style: TextStyle(
+                fontSize: 16,
+              ),
+              decoration:
+                  InputDecoration(isDense: true, border: OutlineInputBorder()),
+              onChanged: (value) => input = value,
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("取消"),
+              onPressed: () => Navigator.of(context).pop(), // 关闭对话框
+            ),
+            FlatButton(
+              child: Text("确定"),
+              onPressed: () {
+                Navigator.of(context).pop(input);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   static Future<bool> showConfirm(
       String title, String content, BuildContext context) async {
     return showDialog<bool>(
