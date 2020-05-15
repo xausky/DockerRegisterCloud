@@ -28,8 +28,15 @@ class NativeUIPlatform extends UIPlatform {
         "/Downloads";
     if (Platform.isAndroid || Platform.isIOS) {
       target = (await DownloadsPathProvider.downloadsDirectory).path;
+      if(target.startsWith("files://")){
+        target = target.substring("files://".length);
+      }
+      if(target.endsWith("/")){
+        target = target.substring(0, target.length - 1);
+      }
     }
     var targetPath = "$target/$repository/$name";
+    print(targetPath);
     if (!await File(targetPath).parent.exists()) {
       File(targetPath).parent.create(recursive: true);
     }
