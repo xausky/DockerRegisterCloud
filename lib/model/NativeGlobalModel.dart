@@ -4,7 +4,7 @@ import 'package:docker_register_cloud/model/GlobalModel.dart';
 import 'package:docker_register_cloud/model/TransportModel.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:clippy/server.dart' as clipy;
-import 'package:url_launcher/url_launcher.dart';
+import 'package:downloads_path_provider/downloads_path_provider.dart';  
 import 'package:open_file/open_file.dart';
 
 class NativeUIPlatform extends UIPlatform {
@@ -26,8 +26,8 @@ class NativeUIPlatform extends UIPlatform {
             Platform.environment['USERPROFILE'] ??
             ".") +
         "/Downloads";
-    if (Platform.isAndroid) {
-      target = "/sdcard/Download";
+    if (Platform.isAndroid || Platform.isIOS) {
+      target = (await DownloadsPathProvider.downloadsDirectory).path;
     }
     var targetPath = "$target/$repository/$name";
     if (!await File(targetPath).parent.exists()) {
