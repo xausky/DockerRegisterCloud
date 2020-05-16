@@ -70,3 +70,4 @@ jobs:
         with:
           name: drc-client-${{ matrix.platfrom }}
           path: go/build/outputs/${{ matrix.platfrom }}
+        continue-on-error: true
