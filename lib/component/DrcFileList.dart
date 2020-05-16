@@ -90,26 +90,41 @@ class DrcFileListState extends State<DrcFileList>
     }
   }
 
-  onRefreshClick() {
-    UIPlatform global = Provider.of<UIPlatform>(context, listen: false);
+  onRefreshClick() async {
+    UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
     setState(() {
       items = null;
     });
-    global
-        .items(widget.repository)
-        .then((value) => setState(() {
-              items = value;
-            }))
-        .catchError((err) {
-      setState(() {
-        items = [];
-      });
-      Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text("获取文件列表失败，仓库不存在或者非公开。",
-            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
-      ));
-      print(err);
-    });
+    String username, password;
+    while (true) {
+      try {
+        if(username != null && password != null){
+          await platform.login(repository, username, password);
+        }
+        var value = await platform.items(widget.repository);
+        setState(() {
+          items = value;
+        });
+        break;
+      } on PermissionDeniedException catch (_) {
+        List<String> results =
+            await DrcDialogs.showAuthority(repository, context);
+        if (results == null) {
+          setState(() {
+            items = [];
+          });
+          break;
+        }
+        username = results[0];
+        password = results[1];
+      } catch (e) {
+        print(e);
+        setState(() {
+          items = [];
+        });
+        break;
+      }
+    }
   }
 
   onUploadClick() async {
@@ -121,10 +136,14 @@ class DrcFileListState extends State<DrcFileList>
     UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
     TransportModel transport =
         Provider.of<TransportModel>(context, listen: false);
-    String name = this.path + target.path.split("/").last;
+    String targetPath = target.path;
+    if (Platform.isWindows) {
+      targetPath = targetPath.replaceAll("\\", "/");
+    }
+    String name = this.path + targetPath.split("/").last;
     while (true) {
       try {
-        await platform.upload(widget.repository, name, target.path, transport);
+        await platform.upload(widget.repository, name, targetPath, transport);
         onRefreshClick();
         break;
       } on PermissionDeniedException catch (_) {

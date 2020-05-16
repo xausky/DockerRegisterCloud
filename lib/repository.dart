@@ -90,6 +90,9 @@ class Repository {
     String requestBody = jsonEncode(manifest);
     request.write(requestBody);
     HttpClientResponse response = await request.close();
+        if (response.statusCode == 401){
+      throw PermissionDeniedException(config.currentRepository);
+    }
     if (response.statusCode >= 300 || response.statusCode < 200) {
       print(request.method);
       print(request.uri);
@@ -221,6 +224,9 @@ class Repository {
     if (response.statusCode == 404) {
       return List();
     }
+    if (response.statusCode == 401){
+      throw PermissionDeniedException(config.currentRepository);
+    }
     if (response.statusCode >= 300 || response.statusCode < 200) {
       String body = await response.transform(utf8.decoder).join();
       throw "Repository list status code ${response.statusCode} $body";
@@ -276,6 +282,9 @@ class Repository {
       response = await request.close();
     }
     response.drain();
+    if (response.statusCode == 401){
+      throw PermissionDeniedException(config.currentRepository);
+    }
     if (response.statusCode >= 400 || response.statusCode < 300) {
       print("https://${artifact.server}/v2/${artifact.name}/blobs/$hash");
       throw "Repository pull status code ${response.statusCode} ${request.headers}";
@@ -299,6 +308,9 @@ class Repository {
       request.headers.set("User-Agent", config.userAgent);
       request.headers.set("Authorization", "Bearer $token");
       response = await request.close();
+    }
+    if (response.statusCode == 401){
+      throw PermissionDeniedException(config.currentRepository);
     }
     if (response.statusCode >= 300 || response.statusCode < 200) {
       throw "Repository pull status code ${response.statusCode}";

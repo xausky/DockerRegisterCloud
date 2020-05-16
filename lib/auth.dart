@@ -72,6 +72,9 @@ class AuthManager {
       request.headers.add("Authorization", "Basic $auth");
     }
     HttpClientResponse response = await request.close();
+    if (response.statusCode == 401){
+      throw PermissionDeniedException(config.currentRepository);
+    }
     if (response.statusCode >= 200 && response.statusCode < 300) {
       String body = await response.transform(utf8.decoder).join();
       Map<String, dynamic> resposeBody = jsonDecode(body);

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:docker_register_cloud/model/GlobalModel.dart';
@@ -65,7 +66,14 @@ class NativeUIPlatform extends UIPlatform {
 
   @override
   void writeClipy(String content) async {
-    clipy.write(content);
+    print(content);
+    if(Platform.isWindows){
+      Process process = await Process.start("clip", []);
+      process.stdin.writeln(content);
+      process.stdin.close();
+    } else {
+      clipy.write(content);
+    }
   }
 
   @override
@@ -74,7 +82,7 @@ class NativeUIPlatform extends UIPlatform {
     if(Platform.isLinux){
       Process.run('xdg-open', [parent]);
     } else if(Platform.isWindows){
-      Process.run('start', [parent]);
+      Process.run('explorer', [parent.replaceAll("/", "\\")]);
     } else if(Platform.isMacOS){
       Process.run('open', [parent]);
     } else {
