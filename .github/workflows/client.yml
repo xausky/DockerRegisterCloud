@@ -6,7 +6,26 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v1
-      - name: Extract Signature
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+        if: github.event.created
+      - name: Output release url file
+        run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
+        if: github.event.created
+      - name: Upload release url file
+        uses: actions/upload-artifact@v1
+        with:
+          name: release_url
+          path: release_url.txt
+        if: github.event.created
+      - name: Extract signature
         run: echo ${{secrets.KEY_FILE}} | base64 -d > $HOME/.android.jks
       - name: set up JDK 1.8
         uses: actions/setup-java@v1
@@ -19,30 +38,11 @@ jobs:
         run: flutter build apk --target-platform android-arm
         env:
           KEY_PASS: ${{secrets.KEY_PASS}}
-      - name: Upload
+      - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
-          name: drc-${{ github.ref }}.apk
+          name: drc.apk
           path: build/app/outputs/flutter-apk/app-release.apk
-      - name: create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
-        if: github.event.created
-      - name: Output Release URL File
-        run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
-        if: github.event.created
-      - name: Save Release URL File for publish
-        uses: actions/upload-artifact@v1
-        with:
-          name: release_url
-          path: release_url.txt
-        if: github.event.created
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -71,7 +71,7 @@ jobs:
       - name: Install Go-Flutter Hover
         run: GO111MODULE=on go get -u -a github.com/go-flutter-desktop/hover
         shell: bash
-      - run: hover build ${{ matrix.platfrom }}
+      - run: $GOPATH/bin/hover build ${{ matrix.platfrom }}
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
