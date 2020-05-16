@@ -23,7 +23,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
-          name: drc-android
+          name: drc-client-android
           path: build/app/outputs/flutter-apk/app-release.apk
   desktop:
     runs-on: ${{ matrix.os }}
@@ -59,6 +59,7 @@ jobs:
         run: GO111MODULE=on go get -u -a github.com/go-flutter-desktop/hover
         shell: bash
       - run: $(go env GOPATH)/bin/hover build ${{ matrix.platfrom }}
+        shell: bash
       - name: Upload Client
         uses: actions/upload-artifact@v2
         with:
