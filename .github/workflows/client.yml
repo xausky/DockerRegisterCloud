@@ -1,7 +1,7 @@
 name: Build Client
 on: [push]
 jobs:
-  release:
+  android:
     runs-on: [ubuntu-latest]
     steps:
       - name: Check Out Code
@@ -25,7 +25,7 @@ jobs:
         with:
           name: drc-android
           path: build/app/outputs/flutter-apk/app-release.apk
-  build:
+  desktop:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -49,6 +49,8 @@ jobs:
           channel: 'beta'
       - name: Setup Dart
         uses: cedx/setup-dart@v1.3.0
+      - run: sudo apt-get install libgl1-mesa-dev xorg-dev
+        if: matrix.os == 'ubuntu-latest'
       - run: mkdir build
       - run: flutter pub get
       - run: dart2native bin/drc.dart -v -o build/${{ matrix.output-name }}
