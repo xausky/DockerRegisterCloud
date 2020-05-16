@@ -60,13 +60,13 @@ jobs:
         shell: bash
       - run: $(go env GOPATH)/bin/hover build ${{ matrix.platfrom }}
         shell: bash
-      - name: Upload Client
-        uses: actions/upload-artifact@v2
-        with:
-          name: drc-client-${{ matrix.platfrom }}
-          path: go/build/outputs/${{ matrix.platfrom }}/
       - name: Upload Command Tools
         uses: actions/upload-artifact@v2
         with:
           name: drc-cli-${{ matrix.platfrom }}
           path: build/${{ matrix.output-name }}
+      - name: Upload Client
+        uses: actions/upload-artifact@v2
+        with:
+          name: drc-client-${{ matrix.platfrom }}
+          path: go/build/outputs/${{ matrix.platfrom }}
