@@ -204,13 +204,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.2.9"
-  downloads_path_provider:
-    dependency: "direct main"
-    description:
-      name: downloads_path_provider
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.1.0"
   ffi:
     dependency: transitive
     description:
@@ -459,6 +452,27 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.6.4"
+  path_provider:
+    dependency: "direct main"
+    description:
+      name: path_provider
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.6.8"
+  path_provider_macos:
+    dependency: transitive
+    description:
+      name: path_provider_macos
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.0.4+2"
+  path_provider_platform_interface:
+    dependency: transitive
+    description:
+      name: path_provider_platform_interface
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.0.2"
   pedantic:
     dependency: transitive
     description:
@@ -480,6 +494,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.0"
+  platform:
+    dependency: transitive
+    description:
+      name: platform
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.2.1"
   plugin_platform_interface:
     dependency: transitive
     description:

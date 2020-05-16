@@ -1,4 +1,4 @@
-package com.example.docker_register_cloud
+package cn.xausky.drc
 
 import io.flutter.embedding.android.FlutterActivity
 
