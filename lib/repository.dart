@@ -217,7 +217,7 @@ class Repository {
     if (response.statusCode >= 400 || response.statusCode < 300) {
       throw "Repository pull status code ${response.statusCode} ${response.headers}";
     }
-    return response.headers["Location"];
+    return response.headers["location"];
   }
 
   Future<void> pull(
