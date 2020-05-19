@@ -3,6 +3,7 @@ import 'package:angel_framework/http.dart';
 import 'package:angel_static/angel_static.dart';
 import 'package:docker_register_cloud/app.dart';
 import 'package:docker_register_cloud/auth.dart';
+import 'package:docker_register_cloud/helper/DrcHttpClient.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:file/local.dart';
 
@@ -18,7 +19,8 @@ main() async {
     GlobalConfig config = GlobalConfig();
     config.currentRepository = repository;
     AuthManager auth = AuthManager(platform, config);
-    List<FileItem> items = await Repository(config, auth).list();
+    DrcHttpClient client = DrcHttpClient(auth, config);
+    List<FileItem> items = await Repository(auth, config, client).list();
     res.json(items);
     res.headers["Content-Type"] = "application/json; charset=utf-8";
   });
@@ -28,7 +30,8 @@ main() async {
     GlobalConfig config = GlobalConfig();
     config.currentRepository = repository;
     AuthManager auth = AuthManager(platform, config);
-    String link = await Repository(config, auth).link(digest);
+    DrcHttpClient client = DrcHttpClient(auth, config);
+    String link = await Repository(auth, config, client).link(digest);
     res.json({"link": link});
     res.headers["Content-Type"] = "application/json; charset=utf-8";
   });

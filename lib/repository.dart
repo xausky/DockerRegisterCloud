@@ -5,60 +5,44 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:docker_register_cloud/auth.dart';
 import 'package:docker_register_cloud/app.dart';
+import 'package:docker_register_cloud/helper/DrcHttpClient.dart';
+import 'package:http/http.dart';
 
 class Repository {
-  AuthManager auth;
-  GlobalConfig config;
-  Repository(GlobalConfig config, AuthManager auth) {
-    this.auth = auth;
-    this.config = config;
-  }
+  final AuthManager auth;
+  final GlobalConfig config;
+  final DrcHttpClient client;
+  Map<String, List<FileItem>> cachedFiles = Map();
+
+  Repository(this.auth, this.config, this.client);
 
   Future<Translation> begin() async {
     Translation translation = new Translation();
-    translation.config.fileItems = await list();
+    if (cachedFiles.containsKey(config.currentRepository)) {
+      translation.config.fileItems = cachedFiles[config.currentRepository];
+    } else {
+      translation.config.fileItems = await list();
+      cachedFiles[config.currentRepository] = translation.config.fileItems;
+    }
     RepositoryArtifact artifact = sovleRepository(config.currentRepository);
     translation.server = artifact.server;
     translation.name = artifact.name;
+    translation.repository = config.currentRepository;
     return translation;
   }
 
   Future<String> beginUpload(Translation translation) async {
-    HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.postUrl(Uri.parse(
-        "https://${translation.server}/v2/${translation.name}/blobs/uploads/"));
-    request.headers.set("User-Agent", config.userAgent);
-    if (translation.token != null) {
-      request.headers.set("Authorization", "Bearer ${translation.token}");
-    }
-    HttpClientResponse response = await request.close();
-    String token;
-    if (response.statusCode == 401) {
-      token = await auth.challenge(
-          config.currentRepository, response.headers.value("Www-Authenticate"));
-      translation.token = token;
-      request = await httpClient.postUrl(Uri.parse(
-          "https://${translation.server}/v2/${translation.name}/blobs/uploads/"));
-      request.headers.set("User-Agent", config.userAgent);
-      request.headers.set("Authorization", "Bearer $token");
-      response = await request.close();
-    }
-    if (response.statusCode == 401){
-      throw PermissionDeniedException(config.currentRepository);
-    }
+    Response response = await client.post(
+        "https://${translation.server}/v2/${translation.name}/blobs/uploads/",
+        headers: {"repository": translation.repository});
     if (response.statusCode >= 300 || response.statusCode < 200) {
-      print(request.method);
-      print(request.uri);
-      print(request.headers);
-      throw "Repository start upload status code ${response.statusCode} ${await response.transform(utf8.decoder).join()}";
+      throw "Repository start upload status code ${response.statusCode} ${response.body}";
     }
-
-    return response.headers.value("Location");
+    return response.headers["location"];
   }
 
   Future<void> commit(Translation translation) async {
-    HttpClient httpClient = HttpClient();
-    List<int> configContent = utf8.encode(jsonEncode(translation.config));
+    List<int> configContent = utf8.encode(json.encode(translation.config));
     String configDigest = await uploadConfig(translation, configContent);
     Map<String, dynamic> manifest = Map();
     manifest["schemaVersion"] = 2;
@@ -79,68 +63,61 @@ class Repository {
     }
     manifest["config"] = manifestConfig;
     manifest["layers"] = layers;
-    HttpClientRequest request = await httpClient.putUrl(Uri.parse(
-        "https://${translation.server}/v2/${translation.name}/manifests/latest"));
-    request.headers.set("User-Agent", config.userAgent);
-    request.headers.set(
-        "Content-Type", "application/vnd.docker.distribution.manifest.v2+json");
-    if (translation.token != null) {
-      request.headers.set("Authorization", "Bearer ${translation.token}");
-    }
-    String requestBody = jsonEncode(manifest);
-    request.write(requestBody);
-    HttpClientResponse response = await request.close();
-        if (response.statusCode == 401){
-      throw PermissionDeniedException(config.currentRepository);
-    }
+    Response response = await client.put(
+        "https://${translation.server}/v2/${translation.name}/manifests/latest",
+        headers: {
+          "repository": translation.repository,
+          "Content-Type": "application/vnd.docker.distribution.manifest.v2+json"
+        },
+        body: json.encode(manifest));
+    cachedFiles.remove(translation.repository);
     if (response.statusCode >= 300 || response.statusCode < 200) {
-      print(request.method);
-      print(request.uri);
-      print(request.headers);
-      throw "Repository start upload status code ${response.statusCode} ${await response.transform(utf8.decoder).join()}";
+      throw "Repository start upload status code ${response.statusCode} ${response.body}";
     }
   }
 
   Future<void> remove(Translation translation, String name) async {
     FileItem target;
-    for(FileItem item in translation.config.fileItems){
-      if(item.name == name){
+    for (FileItem item in translation.config.fileItems) {
+      if (item.name == name) {
         target = item;
       }
     }
-    if(target == null){
+    if (target == null) {
       throw "File item not found $name";
     }
     translation.config.fileItems.remove(target);
   }
 
-  Future<void> pullWithName(Translation translation, String name, String path, TransportProgressListener listener) async {
+  Future<void> pullWithName(Translation translation, String name, String path,
+      TransportProgressListener listener) async {
     FileItem target;
-    for(FileItem item in translation.config.fileItems){
-      if(item.name == name){
+    for (FileItem item in translation.config.fileItems) {
+      if (item.name == name) {
         target = item;
       }
     }
-    if(target == null){
+    if (target == null) {
       throw "File item not found $name";
     }
     await pull(target.digest, path, listener);
   }
 
   Future<String> linkWithName(Translation translation, String name) async {
-        FileItem target;
-    for(FileItem item in translation.config.fileItems){
-      if(item.name == name){
+    FileItem target;
+    for (FileItem item in translation.config.fileItems) {
+      if (item.name == name) {
         target = item;
       }
     }
-    if(target == null){
+    if (target == null) {
       throw "File item not found $name";
     }
     return await link(target.digest);
   }
 
-  Future<void> upload(Translation translation, String name, String path, TransportProgressListener listener) async {
+  Future<void> upload(Translation translation, String name, String path,
+      TransportProgressListener listener) async {
     String url = await beginUpload(translation);
     String hash =
         (await sha256.bind(File(path).openRead()).firstWhere((d) => true))
@@ -150,8 +127,9 @@ class Repository {
     HttpClientRequest request = await httpClient.putUrl(uploadUri);
     request.headers.set("User-Agent", config.userAgent);
     request.headers.set("Content-Type", "application/octet-stream");
-    if (translation.token != null) {
-      request.headers.set("Authorization", "Bearer ${translation.token}");
+    if (client.cachedTokens.containsKey(translation.repository)) {
+      request.headers.set("Authorization",
+          "Bearer ${client.cachedTokens[translation.repository]}");
     }
     request.contentLength = await File(path).length();
     var length = await File(path).length();
@@ -182,136 +160,75 @@ class Repository {
       Translation translation, List<int> content) async {
     String url = await beginUpload(translation);
     String hash = sha256.convert(content).toString();
-    Uri uploadUri = Uri.parse("$url&digest=sha256:$hash");
-    HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.putUrl(uploadUri);
-    request.headers.set("User-Agent", config.userAgent);
-    request.headers.set("Content-Type", "application/octet-stream");
-    if (translation.token != null) {
-      request.headers.set("Authorization", "Bearer ${translation.token}");
-    }
-    request.contentLength = content.length;
-    await request.addStream(Stream.fromFuture(Future.value(content)));
-    HttpClientResponse response = await request.close();
+    Response response = await client.put("$url&digest=sha256:$hash",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "repository": translation.repository
+        },
+        body: content);
     if (response.statusCode >= 300 || response.statusCode < 200) {
-      String body = await response.transform(utf8.decoder).join();
-      throw "Repository upload status code ${response.statusCode} $body";
+      throw "Repository upload status code ${response.statusCode} ${response.body}";
     }
     return "sha256:$hash";
   }
 
   Future<List<FileItem>> list() async {
     RepositoryArtifact artifact = sovleRepository(config.currentRepository);
-    HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.getUrl(Uri.parse(
-        "https://${artifact.server}/v2/${artifact.name}/manifests/latest"));
-    request.headers.set("User-Agent", config.userAgent);
-    request.headers
-        .set("Accept", "application/vnd.docker.distribution.manifest.v2+json");
-    HttpClientResponse response = await request.close();
-    String token;
-    if (response.statusCode == 401) {
-      token = await auth.challenge(
-          config.currentRepository, response.headers.value("Www-Authenticate"));
-      request = await httpClient.getUrl(Uri.parse(
-          "https://${artifact.server}/v2/${artifact.name}/manifests/latest"));
-      request.headers.set("User-Agent", config.userAgent);
-      request.headers.set("Authorization", "Bearer $token");
-      request.headers.set(
-          "Accept", "application/vnd.docker.distribution.manifest.v2+json");
-      response = await request.close();
-    }
+    Response response = await client.get(
+        "https://${artifact.server}/v2/${artifact.name}/manifests/latest",
+        headers: {
+          "Accept": "application/vnd.docker.distribution.manifest.v2+json",
+          "repository": "${config.currentRepository}"
+        });
     if (response.statusCode == 404) {
       return List();
     }
-    if (response.statusCode == 401){
-      throw PermissionDeniedException(config.currentRepository);
-    }
     if (response.statusCode >= 300 || response.statusCode < 200) {
-      String body = await response.transform(utf8.decoder).join();
-      throw "Repository list status code ${response.statusCode} $body";
+      throw "Repository list status code ${response.statusCode} ${response.body}";
     }
-    String body = await response.transform(utf8.decoder).join();
     String configContent =
-        await pullConfig(jsonDecode(body)["config"]["digest"]);
+        await pullConfig(json.decode(response.body)["config"]["digest"]);
     ManifestConfig manifestConfig =
-        ManifestConfig.fromJson(jsonDecode(configContent));
+        ManifestConfig.fromJson(json.decode(configContent));
     return manifestConfig.fileItems;
   }
 
   Future<String> pullConfig(String digest) async {
     RepositoryArtifact artifact = sovleRepository(config.currentRepository);
-    HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.getUrl(Uri.parse(
-        "https://${artifact.server}/v2/${artifact.name}/blobs/$digest"));
-    request.headers.set("User-Agent", config.userAgent);
-    HttpClientResponse response = await request.close();
-    String token;
-    if (response.statusCode == 401) {
-      token = await auth.challenge(
-          config.currentRepository, response.headers.value("Www-Authenticate"));
-      request = await httpClient.getUrl(Uri.parse(
-          "https://${artifact.server}/v2/${artifact.name}/blobs/$digest"));
-      request.headers.set("User-Agent", config.userAgent);
-      request.headers.set("Authorization", "Bearer $token");
-      response = await request.close();
-    }
+    Response response = await client.get(
+        "https://${artifact.server}/v2/${artifact.name}/blobs/$digest",
+        headers: {"repository": "${config.currentRepository}"});
     if (response.statusCode >= 300 || response.statusCode < 200) {
       throw "Repository list status code ${response.statusCode}";
     }
-    return response.transform(utf8.decoder).join();
+    return utf8.decode(response.bodyBytes);
   }
 
   Future<String> link(String hash) async {
     RepositoryArtifact artifact = sovleRepository(config.currentRepository);
-    HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.getUrl(Uri.parse(
-        "https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
-    request.headers.set("User-Agent", config.userAgent);
+    Request request = Request(
+        "get",
+        Uri.parse(
+            "https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
+    request.headers["repository"] = config.currentRepository;
     request.followRedirects = false;
-    HttpClientResponse response = await request.close();
-    String token;
-    if (response.statusCode == 401) {
-      token = await auth.challenge(
-          config.currentRepository, response.headers.value("Www-Authenticate"));
-      request = await httpClient.getUrl(Uri.parse(
-          "https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
-      request.headers.set("User-Agent", config.userAgent);
-      request.headers.set("Authorization", "Bearer $token");
-      request.followRedirects = false;
-      response = await request.close();
-    }
-    response.drain();
-    if (response.statusCode == 401){
-      throw PermissionDeniedException(config.currentRepository);
-    }
+    StreamedResponse response = await client.send(request);
+    response.stream.drain();
     if (response.statusCode >= 400 || response.statusCode < 300) {
-      print("https://${artifact.server}/v2/${artifact.name}/blobs/$hash");
-      throw "Repository pull status code ${response.statusCode} ${request.headers}";
+      throw "Repository pull status code ${response.statusCode} ${response.headers}";
     }
-    return response.headers.value("Location");
+    return response.headers["Location"];
   }
 
-  Future<void> pull(String hash, String path, TransportProgressListener listener) async {
+  Future<void> pull(
+      String hash, String path, TransportProgressListener listener) async {
     RepositoryArtifact artifact = sovleRepository(config.currentRepository);
-    HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.getUrl(Uri.parse(
-        "https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
-    request.headers.set("User-Agent", config.userAgent);
-    HttpClientResponse response = await request.close();
-    String token;
-    if (response.statusCode == 401) {
-      token = await auth.challenge(
-          config.currentRepository, response.headers.value("Www-Authenticate"));
-      request = await httpClient.getUrl(Uri.parse(
-          "https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
-      request.headers.set("User-Agent", config.userAgent);
-      request.headers.set("Authorization", "Bearer $token");
-      response = await request.close();
-    }
-    if (response.statusCode == 401){
-      throw PermissionDeniedException(config.currentRepository);
-    }
+    Request request = Request(
+        "get",
+        Uri.parse(
+            "https://${artifact.server}/v2/${artifact.name}/blobs/$hash"));
+    request.headers["repository"] = config.currentRepository;
+    StreamedResponse response = await client.send(request);
     if (response.statusCode >= 300 || response.statusCode < 200) {
       throw "Repository pull status code ${response.statusCode}";
     }
@@ -320,7 +237,7 @@ class Repository {
     var timer = Timer.periodic(Duration(milliseconds: 500), (timer) {
       listener.onProgess(received, length);
     });
-    await response.map((s) {
+    await response.stream.map((s) {
       received += s.length;
       return s;
     }).pipe(File(path).openWrite());
@@ -353,14 +270,12 @@ class Repository {
     result.name = name;
     return result;
   }
-
 }
 
 class PermissionDeniedException {
   final String repository;
 
   PermissionDeniedException(this.repository);
-
 }
 
 abstract class TransportProgressListener {
@@ -377,6 +292,7 @@ class Translation {
   String name;
   String token;
   String server;
+  String repository;
   ManifestConfig config = ManifestConfig();
 
   Translation();

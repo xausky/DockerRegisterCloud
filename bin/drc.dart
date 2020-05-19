@@ -3,6 +3,7 @@ import 'package:args/args.dart';
 
 import 'package:docker_register_cloud/app.dart';
 import 'package:docker_register_cloud/auth.dart';
+import 'package:docker_register_cloud/helper/DrcHttpClient.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:filesize/filesize.dart';
 
@@ -10,7 +11,8 @@ void main(List<String> args) async {
   BasePlatform platform = BasePlatform();
   GlobalConfig config = GlobalConfig.fromJson(await platform.load('config')) ;
   AuthManager auth = AuthManager(platform, config);
-  Repository repository = Repository(config, auth);
+  DrcHttpClient client = DrcHttpClient(auth, config);
+  Repository repository = Repository(auth, config, client);
   ArgParser parser = ArgParser();
   parser.addFlag('help',
       abbr: 'h', negatable: false, help: "Displays this help information.");

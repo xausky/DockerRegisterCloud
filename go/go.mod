@@ -3,7 +3,7 @@ module hover_test/go
 go 1.14
 
 require (
-	github.com/go-flutter-desktop/go-flutter v0.40.2-0.20200508092704-ee4aceadc186
+	github.com/go-flutter-desktop/go-flutter v0.40.1
 	github.com/go-flutter-desktop/plugins/path_provider v0.4.0
 	github.com/go-flutter-desktop/plugins/shared_preferences v0.4.3
 	github.com/go-flutter-desktop/plugins/url_launcher v0.1.2

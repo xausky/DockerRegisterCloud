@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:docker_register_cloud/app.dart';
 import 'package:docker_register_cloud/auth.dart';
+import 'package:docker_register_cloud/helper/DrcHttpClient.dart';
 import 'package:docker_register_cloud/model/TransportModel.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:flutter/foundation.dart';
@@ -13,14 +14,20 @@ abstract class UIPlatform extends ChangeNotifier with BasePlatform {
   static UIPlatform _instance;
   GlobalConfig config;
   AuthManager auth;
+  DrcHttpClient client;
+  Repository repo;
   int selectedIndex = 0;
 
   UIPlatform() {
     config  = GlobalConfig();
     auth = AuthManager(this, config);
+    client = DrcHttpClient(auth, config);
+    repo = Repository(auth, config, client);
     load('config').then((value) {
       config = GlobalConfig.fromJson(value);
       auth = AuthManager(this, config);
+      client = DrcHttpClient(auth, config);
+      repo = Repository(auth, config, client);
       notifyListeners();
     });
   }

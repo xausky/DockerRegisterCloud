@@ -301,7 +301,6 @@ class DrcFileListState extends State<DrcFileList>
         }
         if (name.startsWith(path)) {
           name = name.substring(path.length);
-          print(name);
           if (name.indexOf("/") == -1 && name.isNotEmpty) {
             list.add(
               InkWell(

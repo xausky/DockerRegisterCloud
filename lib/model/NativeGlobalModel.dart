@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:docker_register_cloud/model/GlobalModel.dart';
@@ -11,13 +10,12 @@ import 'package:open_file/open_file.dart';
 class NativeUIPlatform extends UIPlatform {
   @override
   Future<String> link(String repository, String digest) async {
-    return Repository(config, auth).link(digest);
+    return Repository(auth, config, client).link(digest);
   }
 
   @override
   Future<List<FileItem>> items(String repository) async {
-    print(repository);
-    return Repository(config, auth).list();
+    return repo.list();
   }
 
   @override
@@ -37,7 +35,7 @@ class NativeUIPlatform extends UIPlatform {
     if (!await File(targetPath).parent.exists()) {
       File(targetPath).parent.create(recursive: true);
     }
-    Repository(config, auth).pull(
+    repo.pull(
         digest,
         targetPath,
         ModelDownloadTransportProgressListener(
@@ -47,7 +45,6 @@ class NativeUIPlatform extends UIPlatform {
   @override
   Future<void> upload(
       String repository, name, path, TransportModel transport) async {
-    Repository repo = Repository(config, auth);
     Translation translation = await repo.begin();
     await repo.upload(
         translation,
@@ -92,7 +89,6 @@ class NativeUIPlatform extends UIPlatform {
 
   @override
   Future<void> remove(String name) async {
-    Repository repo = Repository(config, auth);
     Translation translation = await repo.begin();
     await repo.remove(translation, name);
     await repo.commit(translation);
