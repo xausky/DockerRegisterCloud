@@ -20,7 +20,7 @@ class BasePlatform {
   Future<void> save(String key, Object object) async {
     String userHome =
         Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'];
-    await File("$userHome/.drc/config.json").writeAsString(jsonEncode(object));
+    await File("$userHome/.drc/$key.json").writeAsString(jsonEncode(object));
   }
 }
 

@@ -35,6 +35,16 @@ main() async {
     res.json({"link": link});
     res.headers["Content-Type"] = "application/json; charset=utf-8";
   });
+  app.get("/api/download", (req, res) async {
+    String repository = req.queryParameters['repository'];
+    String digest = req.queryParameters['digest'];
+    GlobalConfig config = GlobalConfig();
+    config.currentRepository = repository;
+    AuthManager auth = AuthManager(platform, config);
+    DrcHttpClient client = DrcHttpClient(auth, config);
+    String link = await Repository(auth, config, client).link(digest);
+    res.redirect(link);
+  });
   app.fallback(virtualDirectory.handleRequest);
   await http.startServer('0.0.0.0', 3000);
 }
