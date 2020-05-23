@@ -134,13 +134,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.2"
-  clippy:
-    dependency: "direct main"
-    description:
-      name: clippy
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.0.0"
   code_buffer:
     dependency: transitive
     description:

@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:docker_register_cloud/model/GlobalModel.dart';
 import 'package:docker_register_cloud/model/TransportModel.dart';
 import 'package:docker_register_cloud/repository.dart';
-import 'package:clippy/server.dart' as clipy;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'package:flutter/services.dart';
 
 class NativeUIPlatform extends UIPlatform {
   @override
@@ -63,14 +63,7 @@ class NativeUIPlatform extends UIPlatform {
 
   @override
   void writeClipy(String content) async {
-    print(content);
-    if(Platform.isWindows){
-      Process process = await Process.start("clip", []);
-      process.stdin.writeln(content);
-      process.stdin.close();
-    } else {
-      clipy.write(content);
-    }
+    Clipboard.setData(ClipboardData(text: content));
   }
 
   @override

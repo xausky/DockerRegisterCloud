@@ -13,14 +13,13 @@ class DrcTransportList extends StatefulWidget {
 }
 
 class DrcTransportListState extends State<DrcTransportList> {
-
-  onOpen(String path){
+  onOpen(String path) {
     Provider.of<UIPlatform>(context, listen: false).open(path);
   }
 
   @override
   Widget build(BuildContext context) {
-    var items = context.watch<TransportModel>().items.values;
+    var items = List.from(context.watch<TransportModel>().items.values).reversed;
     List<Widget> list = List();
     if (items.isEmpty) {
       list.add(Text("目前没有传输任务！"));
@@ -54,6 +53,9 @@ class TransportItemView extends StatefulWidget {
 }
 
 class TransportItemViewState extends State<TransportItemView> {
+  int latestReviced = 0;
+  int latestUpdateTime = 0;
+
   @override
   Widget build(BuildContext context) {
     IconData icon = Icons.insert_drive_file;
@@ -65,43 +67,56 @@ class TransportItemViewState extends State<TransportItemView> {
         icon = Icons.file_upload;
         break;
     }
-    int speed =
+    int speed = ((widget.item.current - latestReviced) /
+            (widget.item.end + 1 - latestUpdateTime) *
+            1000)
+        .round();
+    int averageSpeed =
         (widget.item.current / (widget.item.end - widget.item.start) * 1000)
             .round();
-
+    latestReviced = widget.item.current;
+    latestUpdateTime = widget.item.end;
     return Card(
-      margin: EdgeInsets.all(8),
-      child: Column(children: <Widget>[Row(
-        children: [
-          Icon(
-            icon,
-            size: 42,
-            color: Theme.of(context).primaryColor,
-          ),
-          Expanded(
-            child: Column(
+        margin: EdgeInsets.all(8),
+        child: Column(
+          children: <Widget>[
+            Row(
               children: [
-                Container(
-                  margin: EdgeInsets.all(4),
-                  child: Text(
-                    widget.item.name,
-                    textAlign: TextAlign.left,
+                Icon(
+                  icon,
+                  size: 42,
+                  color: Theme.of(context).primaryColor,
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: EdgeInsets.all(4),
+                        child: Text(
+                          widget.item.name,
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(4),
+                        child: Text(
+                            widget.item.state == TransportStateType.TRANSPORTING
+                                ? "已下载：${filesize(widget.item.current)} 总大小：${filesize(widget.item.total)} 实时速度：${filesize(speed)}/s"
+                                : "总大小：${filesize(widget.item.total)} 平均速度：${filesize(averageSpeed)}/s",
+                            textAlign: TextAlign.left),
+                      )
+                    ],
+                    crossAxisAlignment: CrossAxisAlignment.start,
                   ),
                 ),
-                Container(
-                  margin: EdgeInsets.all(4),
-                  child: Text(
-                    widget.item.state == TransportStateType.TRANSPORTING?
-                      "${filesize(widget.item.current)} - ${filesize(widget.item.total)} - ${filesize(speed)}/s":
-                      "${filesize(widget.item.total)} - ${filesize(speed)}/s",
-                      textAlign: TextAlign.left),
-                )
               ],
-              crossAxisAlignment: CrossAxisAlignment.start,
             ),
-          ),
-        ],
-      ),widget.item.state == TransportStateType.TRANSPORTING?LinearProgressIndicator(value: widget.item.current / widget.item.total,):Column()],) 
-    );
+            widget.item.state == TransportStateType.TRANSPORTING
+                ? LinearProgressIndicator(
+                    value: widget.item.current / widget.item.total,
+                  )
+                : Column()
+          ],
+        ));
   }
 }

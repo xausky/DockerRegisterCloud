@@ -29,8 +29,8 @@
 
 * [x] 命令行工具基本功能，登录，文件列表，上传文件，下载文件
 * [x] 直接下载，在支持的仓库服务中可以直接在浏览器中实现下载而无需客户端
-* [ ] 命令行功能优化，重命名文件以及删除文件
-* [ ] GUI 客户端，预计包括 Linux, Windows, Mac OS, Android, iOS，本项目使用 Dart 编写，GUI 客户端将使用 Flutter，期待热心小伙伴的帮助。
+* [x] 命令行功能优化，重命名文件以及删除文件
+* [x] GUI 客户端，预计包括 Linux, Windows, Mac OS, Android, iOS，本项目使用 Dart 编写，GUI 客户端将使用 Flutter，期待热心小伙伴的帮助。
 
 ## :thumbsup: 测试可用的仓库服务
 

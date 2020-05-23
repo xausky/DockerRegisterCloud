@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:docker_register_cloud/model/GlobalModel.dart';
 import 'package:docker_register_cloud/model/TransportModel.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:clippy/browser.dart' as clipy;
 import 'package:docker_register_cloud/repository.dart';
 
 class WebUIPlatform extends UIPlatform {
@@ -43,7 +43,7 @@ class WebUIPlatform extends UIPlatform {
 
   @override
   void writeClipy(String content) async {
-    clipy.write(content);
+    Clipboard.setData(ClipboardData(text: content));
   }
 
   @override
