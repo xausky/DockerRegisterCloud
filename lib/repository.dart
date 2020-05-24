@@ -7,23 +7,27 @@ import 'package:docker_register_cloud/auth.dart';
 import 'package:docker_register_cloud/app.dart';
 import 'package:docker_register_cloud/helper/DrcHttpClient.dart';
 import 'package:http/http.dart';
+import 'package:synchronized/synchronized.dart';
 
 class Repository {
   final AuthManager auth;
   final GlobalConfig config;
   final DrcHttpClient client;
+  final cachedFilesLock = new Lock();
   Map<String, List<FileItem>> cachedFiles = Map();
 
   Repository(this.auth, this.config, this.client);
 
   Future<Translation> begin() async {
     Translation translation = new Translation();
-    if (cachedFiles.containsKey(config.currentRepository)) {
-      translation.config.fileItems = cachedFiles[config.currentRepository];
-    } else {
-      translation.config.fileItems = await list();
-      cachedFiles[config.currentRepository] = translation.config.fileItems;
-    }
+    await cachedFilesLock.synchronized(() async {
+      if (cachedFiles.containsKey(config.currentRepository)) {
+        translation.config.fileItems = cachedFiles[config.currentRepository];
+      } else {
+        translation.config.fileItems = await list();
+        cachedFiles[config.currentRepository] = translation.config.fileItems;
+      }
+    });
     RepositoryArtifact artifact = sovleRepository(config.currentRepository);
     translation.server = artifact.server;
     translation.name = artifact.name;

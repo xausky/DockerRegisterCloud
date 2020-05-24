@@ -81,9 +81,11 @@ class NativeUIPlatform extends UIPlatform {
   }
 
   @override
-  Future<void> remove(String name) async {
+  Future<void> remove(List<String> names) async {
     Translation translation = await repo.begin();
-    await repo.remove(translation, name);
+    for(String name in names){
+      await repo.remove(translation, name);
+    }
     await repo.commit(translation);
   }
 }

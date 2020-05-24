@@ -103,7 +103,7 @@ class DrcDialogs {
           actions: <Widget>[
             FlatButton(
               child: Text("取消"),
-              onPressed: () => Navigator.of(context).pop(), // 关闭对话框
+              onPressed: () => Navigator.of(context).pop(false), // 关闭对话框
             ),
             FlatButton(
               child: Text("确定"),

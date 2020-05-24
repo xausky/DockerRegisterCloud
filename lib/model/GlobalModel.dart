@@ -58,7 +58,7 @@ abstract class UIPlatform extends ChangeNotifier with BasePlatform {
   Future<void> login(String repository, String username, String password);
   Future<void> download(String repository, digest, name, TransportModel transport);
   Future<void> upload(String repository, name, path, TransportModel transport);
-  Future<void> remove(String name);
+  Future<void> remove(List<String> names);
   Future<void> open(String path);
 
   void writeClipy(String content);

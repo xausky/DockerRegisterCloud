@@ -56,10 +56,7 @@ class WebUIPlatform extends UIPlatform {
   Future<void> open(String path) {}
 
   @override
-  Future<void> remove(String name) {
-    // TODO: implement remove
-    throw UnimplementedError();
-  }
+  Future<void> remove(List<String> names) {}
 }
 
 UIPlatform instanceOfGlobalModel() => WebUIPlatform();

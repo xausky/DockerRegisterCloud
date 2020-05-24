@@ -98,10 +98,15 @@ class DrcFileListState extends State<DrcFileList>
     String username, password;
     while (true) {
       try {
-        if(username != null && password != null){
+        if (username != null && password != null) {
           await platform.login(repository, username, password);
         }
         var value = await platform.items(widget.repository);
+        for (FileItem item in value) {
+          if (!item.name.startsWith("/")) {
+            item.name = "/" + item.name;
+          }
+        }
         setState(() {
           items = value;
         });
@@ -127,12 +132,7 @@ class DrcFileListState extends State<DrcFileList>
     }
   }
 
-  onUploadClick() async {
-    File target = await FilePicker.getFile();
-    print(target);
-    if (target == null || !await target.exists()) {
-      return;
-    }
+  uploadOneItem(File target) async {
     UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
     TransportModel transport =
         Provider.of<TransportModel>(context, listen: false);
@@ -155,6 +155,39 @@ class DrcFileListState extends State<DrcFileList>
         }
         await platform.login(repository, results[0], results[1]);
       }
+    }
+  }
+
+  onUploadClick() async {
+    List<File> targets = await FilePicker.getMultiFile();
+    print(targets);
+    if (targets == null || targets.isEmpty) {
+      return;
+    }
+    for (File target in targets) {
+      uploadOneItem(target);
+    }
+  }
+
+  onDeleteClick(String name, bool directory) async {
+    print("$name $directory");
+    if (await DrcDialogs.showConfirm("确认删除", "确定删除[$name]", context)) {
+      if (directory) {
+        List<String> containsNames = List();
+        for (FileItem item in items) {
+          if (item.name.startsWith(name)) {
+            containsNames.add(item.name);
+          }
+        }
+        await context.read<UIPlatform>().remove(containsNames);
+      } else {
+        await context.read<UIPlatform>().remove([name]);
+      }
+      await onRefreshClick();
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("删除文件成功",
+            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
+      ));
     }
   }
 
@@ -267,9 +300,6 @@ class DrcFileListState extends State<DrcFileList>
       Set<String> dirs = Set();
       items.forEach((element) {
         String name = element.name;
-        if (!name.startsWith("/")) {
-          name = "/$name";
-        }
         if (name.startsWith(path)) {
           name = name.substring(path.length);
           if (name.indexOf("/") != -1) {
@@ -285,9 +315,9 @@ class DrcFileListState extends State<DrcFileList>
                       });
                     },
                     child: FileItemView(
-                      name: name,
-                      directory: true,
-                    )),
+                        name: name,
+                        directory: true,
+                        onDelete: () => onDeleteClick("$path$name/", true))),
               );
             }
           }
@@ -296,9 +326,6 @@ class DrcFileListState extends State<DrcFileList>
       items.forEach((element) {
         Key itemkey = GlobalKey();
         String name = element.name;
-        if (!name.startsWith("/")) {
-          name = "/$name";
-        }
         if (name.startsWith(path)) {
           name = name.substring(path.length);
           if (name.indexOf("/") == -1 && name.isNotEmpty) {
@@ -313,20 +340,7 @@ class DrcFileListState extends State<DrcFileList>
                     size: element.size,
                     digest: element.digest,
                     directory: false,
-                    onDelete: () async {
-                      if (await DrcDialogs.showConfirm(
-                          "确认删除", "确定删除文件[$name]", context)) {
-                        await context.read<UIPlatform>().remove(element.name);
-                        setState(() {
-                          items.remove(element);
-                        });
-                        Scaffold.of(context).showSnackBar(SnackBar(
-                          content: Text("删除文件成功",
-                              style: TextStyle(
-                                  fontFamilyFallback: ['WenQuanYi Micro Hei'])),
-                        ));
-                      }
-                    },
+                    onDelete: () => onDeleteClick(element.name, false),
                   )),
             );
           }
@@ -451,14 +465,12 @@ class FileItemViewState extends State<FileItemView> {
                   },
                   tooltip: "复制下载链接",
                 ),
-          widget.directory
-              ? Column()
-              : IconButton(
-                  color: Theme.of(context).primaryColor,
-                  icon: Icon(Icons.delete),
-                  onPressed: widget.onDelete,
-                  tooltip: "删除文件",
-                ),
+          IconButton(
+            color: Theme.of(context).primaryColor,
+            icon: Icon(Icons.delete),
+            onPressed: widget.onDelete,
+            tooltip: "删除文件",
+          ),
         ],
       ),
     );

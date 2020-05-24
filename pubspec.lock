@@ -646,6 +646,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.5"
+  synchronized:
+    dependency: "direct main"
+    description:
+      name: synchronized
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.2.0"
   term_glyph:
     dependency: transitive
     description:
