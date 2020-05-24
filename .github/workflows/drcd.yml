@@ -15,8 +15,8 @@ jobs:
       - run: dart2native bin/drcd.dart -v -o docker/drcd
       - run: flutter build web
       - run: mv build/web docker/web
-      - run: echo $PACKAGE_UPLOAD_KEY | docker login docker.pkg.github.com -u xausky --password-stdin
+      - run: echo $DOCKER_PASSWORD | docker login -u xausky --password-stdin
         env:
-          PACKAGE_UPLOAD_KEY: ${{ secrets.PACKAGE_UPLOAD_KEY }}
-      - run: docker build -t docker.pkg.github.com/xausky/dockerregistercloud/drcd:${GITHUB_REF##*/} docker
-      - run: docker push docker.pkg.github.com/xausky/dockerregistercloud/drcd:${GITHUB_REF##*/}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - run: docker build -t xausky/drcd:${GITHUB_REF##*/} docker
+      - run: docker push xausky/drcd:${GITHUB_REF##*/}
