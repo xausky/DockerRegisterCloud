@@ -256,7 +256,7 @@ class DrcFileListState extends State<DrcFileList>
             String name = await DrcDialogs.showInput("输入文件夹名称", context);
             if (name != null) {
               setState(() {
-                items.add(FileItem(name: '$name/'));
+                items.add(FileItem(name: '$path$name/'));
               });
             }
           },
