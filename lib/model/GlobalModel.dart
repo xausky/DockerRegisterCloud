@@ -24,7 +24,9 @@ abstract class UIPlatform extends ChangeNotifier with BasePlatform {
     client = DrcHttpClient(auth, config);
     repo = Repository(auth, config, client);
     load('config').then((value) {
-      config = GlobalConfig.fromJson(value);
+      if(value != null){
+        config = GlobalConfig.fromJson(value);
+      }
       auth = AuthManager(this, config);
       client = DrcHttpClient(auth, config);
       repo = Repository(auth, config, client);

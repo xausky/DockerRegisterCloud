@@ -9,7 +9,11 @@ import 'package:filesize/filesize.dart';
 
 void main(List<String> args) async {
   BasePlatform platform = BasePlatform();
-  GlobalConfig config = GlobalConfig.fromJson(await platform.load('config')) ;
+  GlobalConfig config = GlobalConfig();
+  dynamic configContent = await platform.load('config');
+  if(configContent != null){
+    config = GlobalConfig.fromJson(configContent);
+  }
   AuthManager auth = AuthManager(platform, config);
   DrcHttpClient client = DrcHttpClient(auth, config);
   Repository repository = Repository(auth, config, client);
