@@ -20,3 +20,12 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       - run: docker build -t xausky/drcd:${GITHUB_REF##*/} docker
       - run: docker push xausky/drcd:${GITHUB_REF##*/}
+      - run: mkdir -p aliyun-fc/build
+      - run: cp docker/drcd aliyun-fc/bootstrap
+      - run: cp -r docker/web aliyun-fc/build
+      - name: Upload AliyunFC
+        uses: actions/upload-artifact@v2
+        with:
+          name: drcd-aliyun-fc
+          path: aliyun-fc
+        continue-on-error: true

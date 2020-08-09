@@ -6,6 +6,7 @@ import 'package:docker_register_cloud/auth.dart';
 import 'package:docker_register_cloud/helper/DrcHttpClient.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:file/local.dart';
+import 'dart:io' show Platform;
 
 main() async {
   BasePlatform platform = BasePlatform();
@@ -46,5 +47,9 @@ main() async {
     res.redirect(link);
   });
   app.fallback(virtualDirectory.handleRequest);
-  await http.startServer('0.0.0.0', 3000);
+  var port = 3000;
+  if (Platform.environment["FC_SERVER_PORT"] != null) {
+    port = int.parse(Platform.environment["FC_SERVER_PORT"]);
+  }
+  await http.startServer('0.0.0.0', port);
 }
