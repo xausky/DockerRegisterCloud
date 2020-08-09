@@ -22,7 +22,7 @@
 ## :zap: 直接下载
 
 在支持的仓库上可以通过浏览器实现无客户端下载功能，对直接下载服务的服务器端压力很小。  
-目前有部署公共服务器： [https://drcd.xausky.cn/](https://drcd.xausky.cn/)  
+目前有部署公共服务器： [http://drcd.xausky.cn/](https://drcd.xausky.cn/)  
 也可以使用[此 Docker 镜像](https://hub.docker.com/repository/docker/xausky/drcd)自行部署
 
 ## :dart: 功能
@@ -31,6 +31,7 @@
 * [x] 直接下载，在支持的仓库服务中可以直接在浏览器中实现下载而无需客户端
 * [x] 命令行功能优化，重命名文件以及删除文件
 * [x] GUI 客户端，预计包括 Linux, Windows, Mac OS, Android, iOS，本项目使用 Dart 编写，GUI 客户端将使用 Flutter，期待热心小伙伴的帮助。
+* [x] 直接下载支持到仓库可以用 Web 版客户端复制永久直链，可用于图床等。
 
 ## :thumbsup: 测试可用的仓库服务
 

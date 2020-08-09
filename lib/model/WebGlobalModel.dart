@@ -10,12 +10,7 @@ import 'package:docker_register_cloud/repository.dart';
 class WebUIPlatform extends UIPlatform {
   @override
   Future<String> link(String repository, String digest) async {
-    var response =
-        await http.get("/api/link?repository=$repository&digest=$digest");
-    if (response.statusCode >= 300 || response.statusCode < 200) {
-      throw "/items Invoke Error ${response.statusCode}";
-    }
-    return jsonDecode(response.body)["link"];
+    return "${window.location.origin}/api/download?repository=$repository&digest=$digest";
   }
 
   @override

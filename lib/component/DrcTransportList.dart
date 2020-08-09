@@ -19,7 +19,8 @@ class DrcTransportListState extends State<DrcTransportList> {
 
   @override
   Widget build(BuildContext context) {
-    var items = List.from(context.watch<TransportModel>().items.values).reversed;
+    var items =
+        List.from(context.watch<TransportModel>().items.values).reversed;
     List<Widget> list = List();
     if (items.isEmpty) {
       list.add(Text("目前没有传输任务！"));
@@ -33,10 +34,34 @@ class DrcTransportListState extends State<DrcTransportList> {
         ));
       });
     }
-    return Container(
+    List<Widget> toolbar = List();
+    toolbar.add(Container(
+      child: FlatButton(
+        color: Theme.of(context).secondaryHeaderColor,
+        child: Text("清空已完成任务"),
+        onPressed: () {
+          context.read<TransportModel>().removeCompleted();
+        },
+      ),
+    ));
+    List<Widget> headers = List();
+    headers.add(
+      Container(
+          margin: EdgeInsets.all(8),
+          height: 46,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: toolbar,
+          )),
+    );
+    headers.add(Expanded(
       child: ListView(
         children: list,
       ),
+    ));
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      children: headers,
     );
   }
 }

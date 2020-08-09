@@ -159,7 +159,12 @@ class DrcFileListState extends State<DrcFileList>
   }
 
   onUploadClick() async {
-    List<File> targets = await FilePicker.getMultiFile();
+    List<File> targets;
+    if (Platform.isMacOS) {
+      targets = [await FilePicker.getFile(type: FileType.any)];
+    } else {
+      targets = await FilePicker.getMultiFile(type: FileType.any);
+    }
     print(targets);
     if (targets == null || targets.isEmpty) {
       return;
@@ -347,7 +352,6 @@ class DrcFileListState extends State<DrcFileList>
         }
       });
     }
-
     headers.add(Expanded(
       child: ListView(
         children: list,

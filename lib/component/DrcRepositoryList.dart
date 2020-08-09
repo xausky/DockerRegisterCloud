@@ -23,7 +23,7 @@ class DrcRepositoryListState extends State<DrcRepositoryList> {
     var items = context.watch<UIPlatform>().config.repositoryCretificates;
     List<Widget> list = List();
     if (items.isEmpty) {
-      list.add(Text("目前没有传输任务！"));
+      list.add(Text("目前没有存储的仓库，请先到浏览页面输入仓库地址！"));
     } else {
       items.forEach((k, v) {
         list.add(InkWell(

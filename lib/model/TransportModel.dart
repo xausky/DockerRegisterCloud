@@ -47,6 +47,14 @@ class TransportModel extends ChangeNotifier {
       platform.save('transports', items);
     }
   }
+
+  void removeCompleted() {
+    items.removeWhere(
+        (key, value) => value.state == TransportStateType.COMPLETED);
+    notifyListeners();
+    UIPlatform platform = UIPlatform.instance();
+    platform.save('transports', items);
+  }
 }
 
 enum TransportItemType { UPLOAD, DOWNLOAD }
