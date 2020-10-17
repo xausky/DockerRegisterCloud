@@ -36,11 +36,22 @@ class DrcTransportListState extends State<DrcTransportList> {
     }
     List<Widget> toolbar = List();
     toolbar.add(Container(
+      padding: EdgeInsets.all(4),
       child: FlatButton(
         color: Theme.of(context).secondaryHeaderColor,
         child: Text("清空已完成任务"),
         onPressed: () {
           context.read<TransportModel>().removeCompleted();
+        },
+      ),
+    ));
+    toolbar.add(Container(
+      padding: EdgeInsets.all(4),
+      child: FlatButton(
+        color: Theme.of(context).secondaryHeaderColor,
+        child: Text("清空所有任务"),
+        onPressed: () {
+          context.read<TransportModel>().clear();
         },
       ),
     ));
@@ -126,7 +137,7 @@ class TransportItemViewState extends State<TransportItemView> {
                         margin: EdgeInsets.all(4),
                         child: Text(
                             widget.item.state == TransportStateType.TRANSPORTING
-                                ? "已下载：${filesize(widget.item.current)} 总大小：${filesize(widget.item.total)} 实时速度：${filesize(speed)}/s"
+                                ? "已传输：${filesize(widget.item.current)} 总大小：${filesize(widget.item.total)} 实时速度：${filesize(speed)}/s"
                                 : "总大小：${filesize(widget.item.total)} 平均速度：${filesize(averageSpeed)}/s",
                             textAlign: TextAlign.left),
                       )

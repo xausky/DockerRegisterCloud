@@ -123,17 +123,14 @@ class Repository {
   Future<void> upload(Translation translation, String name, String path,
       TransportProgressListener listener) async {
     String url = await beginUpload(translation);
-    String hash =
-        (await sha256.bind(File(path).openRead()).firstWhere((d) => true))
-            .toString();
-    Uri uploadUri = Uri.parse("$url&digest=sha256:$hash");
+    Future<Digest> hashFuture =sha256.bind(File(path).openRead()).first;
+    Uri uploadUri = Uri.parse("$url");
     HttpClient httpClient = HttpClient();
-    HttpClientRequest request = await httpClient.putUrl(uploadUri);
+    HttpClientRequest request = await httpClient.patchUrl(uploadUri);
     request.headers.set("User-Agent", config.userAgent);
     request.headers.set("Content-Type", "application/octet-stream");
     if (client.cachedTokens.containsKey(translation.repository)) {
-      request.headers.set("Authorization",
-          "Bearer ${client.cachedTokens[translation.repository]}");
+      request.headers.set("Authorization", "Bearer ${client.cachedTokens[translation.repository]}");
     }
     request.contentLength = await File(path).length();
     var length = await File(path).length();
@@ -150,6 +147,16 @@ class Repository {
     if (response.statusCode >= 300 || response.statusCode < 200) {
       String body = await response.transform(utf8.decoder).join();
       throw "Repository upload status code ${response.statusCode} ${response.headers} $body";
+    }
+    url = response.headers.value("location");
+    String hash = (await hashFuture).toString();
+    Response completeResponse = await client.put(
+        "$url&digest=sha256:$hash",
+        headers: {
+          "repository": translation.repository
+        });
+    if (completeResponse.statusCode >= 300 || completeResponse.statusCode < 200) {
+      throw "Repository start upload status code ${completeResponse.statusCode} ${completeResponse.body}";
     }
     timer.cancel();
     listener.onSuccess(length);

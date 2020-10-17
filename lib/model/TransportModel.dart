@@ -55,7 +55,17 @@ class TransportModel extends ChangeNotifier {
     UIPlatform platform = UIPlatform.instance();
     platform.save('transports', items);
   }
+
+  void clear() {
+    items.clear();
+    notifyListeners();
+    UIPlatform platform = UIPlatform.instance();
+    platform.save('transports', items);
+  }
+
 }
+
+
 
 enum TransportItemType { UPLOAD, DOWNLOAD }
 

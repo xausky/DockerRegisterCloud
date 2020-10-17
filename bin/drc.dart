@@ -162,7 +162,7 @@ class PrintUploadTransportProgressListener extends TransportProgressListener {
   void onProgess(int current, int total) {
     var end = DateTime.now().millisecondsSinceEpoch;
     var speed = (current / (end - start) * 1000).round();
-    print("Uploading $name received ${filesize(current)} total ${filesize(total)} speed ${filesize(speed)}/s");
+    print("Uploading $name uploaded ${filesize(current)} total ${filesize(total)} speed ${filesize(speed)}/s");
   }
 
   @override
