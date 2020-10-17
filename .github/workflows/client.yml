@@ -64,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: drc-cli-${{ matrix.platfrom }}
-          path: build/${{ matrix.output-name }}
+          path: build/${{ matrix.output-name }}-release
       - name: Upload Client
         uses: actions/upload-artifact@v2
         with:
