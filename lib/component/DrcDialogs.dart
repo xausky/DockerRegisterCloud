@@ -1,3 +1,4 @@
+import 'package:docker_register_cloud/component/DrcPreview.dart';
 import 'package:flutter/material.dart';
 
 class DrcDialogs {
@@ -115,5 +116,9 @@ class DrcDialogs {
         );
       },
     );
+  }
+
+  static void showPreview(BuildContext context, String name, String url) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => DrcPreview(name: name, url: url), fullscreenDialog: true));
   }
 }

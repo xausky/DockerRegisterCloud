@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:docker_register_cloud/component/DrcDialogs.dart';
+import 'package:docker_register_cloud/component/DrcPreview.dart';
 import 'package:docker_register_cloud/model/GlobalModel.dart';
 import 'package:docker_register_cloud/model/TransportModel.dart';
 import 'package:docker_register_cloud/repository.dart';
@@ -285,7 +286,10 @@ class DrcFileListState extends State<DrcFileList>
         fontSize: 16,
       ),
       decoration: InputDecoration(
-          isDense: true, border: OutlineInputBorder(), labelText: '仓库地址'),
+          contentPadding: EdgeInsets.only(left: 10.0, bottom: 10.0, top: 10.0),
+          isDense: true,
+          border: OutlineInputBorder(),
+          labelText: '仓库地址'),
       onSubmitted: (value) => onRepositorySubmitted(value),
     )));
     headers.add(
@@ -386,6 +390,18 @@ class FileItemView extends StatefulWidget {
 }
 
 class FileItemViewState extends State<FileItemView> {
+  bool canPreview(FileItemView widget) {
+    if (widget.directory) {
+      return false;
+    }
+    int indexOfDot = widget.name.lastIndexOf(".");
+    if (indexOfDot == -1) {
+      return false;
+    }
+    String ext = widget.name.substring(indexOfDot + 1);
+    return DrcPreview.previewFormats.contains(ext.toLowerCase());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -418,6 +434,22 @@ class FileItemViewState extends State<FileItemView> {
               crossAxisAlignment: CrossAxisAlignment.start,
             ),
           ),
+          canPreview(widget)
+              ? IconButton(
+                  color: Theme.of(context).primaryColor,
+                  icon: Icon(Icons.preview),
+                  onPressed: () async {
+                    UIPlatform global =
+                        Provider.of<UIPlatform>(context, listen: false);
+                    global
+                        .link(global.config.currentRepository, widget.digest)
+                        .then((value) {
+                      DrcDialogs.showPreview(context, widget.name, value);
+                    });
+                  },
+                  tooltip: "预览文件",
+                )
+              : Column(),
           widget.directory
               ? Column()
               : IconButton(

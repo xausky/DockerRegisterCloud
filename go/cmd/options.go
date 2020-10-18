@@ -8,7 +8,7 @@ import (
 )
 
 var options = []flutter.Option{
-	flutter.WindowInitialDimensions(480, 800),
+	flutter.WindowInitialDimensions(600, 800),
 	flutter.AddPlugin(&shared_preferences.SharedPreferencesPlugin{
 		VendorName:      "xausky",
 		ApplicationName: "drc",
