@@ -54,6 +54,8 @@ jobs:
         uses: cedx/setup-dart@v1.3.0
       - run: sudo apt-get install libgl1-mesa-dev xorg-dev
         if: matrix.os == 'ubuntu-latest'
+      - run: sudo wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool && sudo chmod +x /usr/local/bin/appimagetool
+        if: matrix.os == 'ubuntu-latest'
       - run: mkdir build
       - run: flutter pub get
       - run: dart2native bin/drc.dart -v -o build/${{ matrix.output-name }}

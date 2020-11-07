@@ -51,10 +51,15 @@
 
 ## :handshake: 贡献
 
-QQ群: [1073732514](https://jq.qq.com/?_wv=1027&k=5Whgj7Y)
-欢迎各种问题，需求，BUG报告和代码PR!<br />提交到这里就可以 [问题页面](https://github.com/xausky/DockerRegisterCloud/issues).
+QQ群: [1073732514](https://jq.qq.com/?_wv=1027&k=5Whgj7Y)  
+欢迎各种问题，需求，BUG报告和代码PR!<br />提交到这里就可以 [问题页面](https://github.com/xausky/DockerRegisterCloud/issues).  
 
-## :joy: 免责声明
+感谢以下网友对仓库的贡献：  
+A . s ℡ -- 重制项目图标  
+
+同时感谢其他网友在其他方面的贡献。
+
+# :joy: 免责声明
 
 本项目编写仅基于 [Docker Registry HTTP API V2](https://docs.docker.com/registry/spec/api/) 未曾尝试破解或者逆向任何公司服务，用户存储的内容以及隐私性和安全性由用户自己负责以及仓库服务提供商保证，本项目未曾也没有能力负责和保证。
 
