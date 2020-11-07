@@ -90,6 +90,12 @@ class Repository {
     if (target == null) {
       throw "File item not found $name";
     }
+    Response response = await client.delete(
+        "https://${translation.server}/v2/${translation.name}/blobs/${target.digest}",
+        headers: {"repository": translation.repository});
+    if (response.statusCode >= 300 || response.statusCode < 200) {
+      throw "Repository start upload status code ${response.statusCode} ${response.body}";
+    }
     translation.config.fileItems.remove(target);
   }
 
@@ -123,14 +129,15 @@ class Repository {
   Future<void> upload(Translation translation, String name, String path,
       TransportProgressListener listener) async {
     String url = await beginUpload(translation);
-    Future<Digest> hashFuture =sha256.bind(File(path).openRead()).first;
+    Future<Digest> hashFuture = sha256.bind(File(path).openRead()).first;
     Uri uploadUri = Uri.parse("$url");
     HttpClient httpClient = HttpClient();
     HttpClientRequest request = await httpClient.patchUrl(uploadUri);
     request.headers.set("User-Agent", config.userAgent);
     request.headers.set("Content-Type", "application/octet-stream");
     if (client.cachedTokens.containsKey(translation.repository)) {
-      request.headers.set("Authorization", "Bearer ${client.cachedTokens[translation.repository]}");
+      request.headers.set("Authorization",
+          "Bearer ${client.cachedTokens[translation.repository]}");
     }
     request.contentLength = await File(path).length();
     var length = await File(path).length();
@@ -150,12 +157,10 @@ class Repository {
     }
     url = response.headers.value("location");
     String hash = (await hashFuture).toString();
-    Response completeResponse = await client.put(
-        "$url&digest=sha256:$hash",
-        headers: {
-          "repository": translation.repository
-        });
-    if (completeResponse.statusCode >= 300 || completeResponse.statusCode < 200) {
+    Response completeResponse = await client.put("$url&digest=sha256:$hash",
+        headers: {"repository": translation.repository});
+    if (completeResponse.statusCode >= 300 ||
+        completeResponse.statusCode < 200) {
       throw "Repository start upload status code ${completeResponse.statusCode} ${completeResponse.body}";
     }
     timer.cancel();

@@ -34,12 +34,15 @@ jobs:
           - os: ubuntu-latest
             output-name: drc
             platfrom: linux
+            packaging: linux-appimage
           - os: macOS-latest
             output-name: drc
             platfrom: darwin
+            packaging: darwin-dmg
           - os: windows-latest
             output-name: drc.exe
             platfrom: windows
+            packaging: darwin-dmg
     steps:
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -58,7 +61,7 @@ jobs:
       - name: Install Go-Flutter Hover
         run: GO111MODULE=on go get -u -a github.com/go-flutter-desktop/hover
         shell: bash
-      - run: $(go env GOPATH)/bin/hover build -b @master ${{ matrix.platfrom }}
+      - run: $(go env GOPATH)/bin/hover build -b @master ${{ matrix.packaging }}
         shell: bash
       - name: Upload Command Tools
         uses: actions/upload-artifact@v2
@@ -69,5 +72,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: drc-client-${{ matrix.platfrom }}
-          path: go/build/outputs/${{ matrix.platfrom }}-release
+          path: go/build/outputs/${{ matrix.packaging }}-release
         continue-on-error: true

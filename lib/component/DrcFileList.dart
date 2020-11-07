@@ -177,23 +177,40 @@ class DrcFileListState extends State<DrcFileList>
 
   onDeleteClick(String name, bool directory) async {
     print("$name $directory");
+    UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
+    TransportModel transport =
+        Provider.of<TransportModel>(context, listen: false);
     if (await DrcDialogs.showConfirm("确认删除", "确定删除[$name]", context)) {
-      if (directory) {
-        List<String> containsNames = List();
-        for (FileItem item in items) {
-          if (item.name.startsWith(name)) {
-            containsNames.add(item.name);
+      while (true) {
+        try {
+          if (directory) {
+            List<String> containsNames = List();
+            for (FileItem item in items) {
+              if (item.name.startsWith(name)) {
+                containsNames.add(item.name);
+              }
+            }
+            await context.read<UIPlatform>().remove(containsNames);
+          } else {
+            await context.read<UIPlatform>().remove([name]);
           }
+          await onRefreshClick();
+          Scaffold.of(context).showSnackBar(SnackBar(
+            content: Text("删除文件成功",
+                style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
+          ));
+          break;
+        } on PermissionDeniedException catch (e) {
+          print(e.repository);
+          List<String> results =
+              await DrcDialogs.showAuthority(repository, context);
+          if (results == null) {
+            transport.removeItem("${widget.repository}:$name");
+            break;
+          }
+          await platform.login(repository, results[0], results[1]);
         }
-        await context.read<UIPlatform>().remove(containsNames);
-      } else {
-        await context.read<UIPlatform>().remove([name]);
       }
-      await onRefreshClick();
-      Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text("删除文件成功",
-            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
-      ));
     }
   }
 
