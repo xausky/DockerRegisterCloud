@@ -15,7 +15,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
         with:
-          channel: 'beta'
+          channel: 'stable'
       - name: Build APK
         run: flutter build apk --target-platform android-arm
         env:
@@ -42,7 +42,7 @@ jobs:
           - os: windows-latest
             output-name: drc.exe
             platfrom: windows
-            packaging: darwin-dmg
+            packaging: windows-msi
     steps:
       - name: Check Out Code
         uses: actions/checkout@v2
