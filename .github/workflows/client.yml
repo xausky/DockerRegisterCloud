@@ -56,6 +56,8 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
       - run: sudo wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool && sudo chmod +x /usr/local/bin/appimagetool
         if: matrix.os == 'ubuntu-latest'
+      - run: choco install -y wixtoolset
+        if: matrix.os == 'windows-latest'
       - run: mkdir build
       - run: flutter pub get
       - run: dart2native bin/drc.dart -v -o build/${{ matrix.output-name }}
