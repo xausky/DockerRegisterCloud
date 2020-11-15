@@ -28,6 +28,9 @@
             <Component Id="icudtl.dat" Guid="*">
                 <File Id="icudtl.dat" Source="build{{.pathSeparator}}icudtl.dat" KeyPath="yes"/>
             </Component>
+            <Component Id="libapp.so" Guid="*">
+                <File Id="libapp.so" Source="build{{.pathSeparator}}libapp.so" KeyPath="yes"/>
+            </Component>
         </DirectoryRef>
         <DirectoryRef Id="ASSETSDIRECTORY">
             <Component Id="icon.png" Guid="*">
@@ -54,6 +57,7 @@
             <ComponentRef Id="{{.executableName}}.exe"/>
             <ComponentRef Id="flutter_engine.dll"/>
             <ComponentRef Id="icudtl.dat"/>
+            <ComponentRef Id="libapp.so"/>
             <ComponentRef Id="icon.png"/>
             <ComponentRef Id="ApplicationShortcut"/>
             <?include component_refs.wxi ?>

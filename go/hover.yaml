@@ -8,3 +8,4 @@ branch: "" # Change to "@latest" to download the latest go-flutter version on ev
 # opengl: "none" # Uncomment this line if you have trouble with your OpenGL driver (https://github.com/go-flutter-desktop/go-flutter/issues/272)
 docker: false
 engine-version: "" # change to a engine version commit
+application-name: Docker Register Cloud
