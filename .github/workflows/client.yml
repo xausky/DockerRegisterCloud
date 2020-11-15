@@ -56,7 +56,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
       - run: sudo wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool && sudo chmod +x /usr/local/bin/appimagetool
         if: matrix.os == 'ubuntu-latest'
-      - run: echo "C:\Program Files (x86)\WiX Toolset v3.11\bin" >> $GITHUB_PATH
+      - run: echo "C:\Program Files (x86)\WiX Toolset v3.11\bin" >> $env:GITHUB_PATH
         if: matrix.os == 'windows-latest'
       - run: mkdir build
       - run: flutter pub get
