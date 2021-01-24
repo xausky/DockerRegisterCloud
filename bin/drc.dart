@@ -21,34 +21,34 @@ main(List<String> args) async {
   parser.addFlag('help',
       abbr: 'h', negatable: false, help: "Displays this help information.");
   parser.addCommand("login")
-    ..addSeparator("Log in to a Docker registry.\nbrc login <repository>")
+    ..addSeparator("Log in to a Docker registry.\ndrc login <repository>")
     ..addOption("username", abbr: "u", help: "Specify username.")
     ..addOption("password",
         abbr: "p",
         help: "Specify a password, only recommended for batch processing.");
   parser.addCommand("push").addSeparator(
-      "Upload a file to the current repository.\nbrc push <path> <name>");
+      "Upload a file to the current repository.\ndrc push <path> <name>");
   parser.addCommand("pull").addSeparator(
-      "Download a file from the current repository.\nbrc pull <name> <path>");
+      "Download a file from the current repository.\ndrc pull <name> <path>");
   parser
       .addCommand("ls")
-      .addSeparator("List the current repository file list.\nbrc list");
+      .addSeparator("List the current repository file list.\ndrc list");
   parser.addCommand("use").addSeparator(
-      "Switch current repository.\nbrc use <repository>\teg. brc use registry-1.docker.io/xausky/public");
-  parser.addCommand("repos").addSeparator("List repository list.\nbrc repos");
+      "Switch current repository.\ndrc use <repository>\teg. drc use registry-1.docker.io/xausky/public");
+  parser.addCommand("repos").addSeparator("List repository list.\ndrc repos");
   parser.addCommand("rmr").addSeparator(
-      "Remove repository from repository list.\nbrc rmr <repository>");
+      "Remove repository from repository list.\ndrc rmr <repository>");
   parser
       .addCommand("link")
-      .addSeparator("Direct download address of file.\nbrc link <name>");
+      .addSeparator("Direct download address of file.\ndrc link <name>");
   parser.addCommand("rm").addSeparator(
-      "Remove a file from the current repository.\nbrc rm <name>");
+      "Remove a file from the current repository.\ndrc rm <name>");
   parser.addSeparator(
-      'Use "brc [command] --help" for more information about a command.');
+      'Use "drc [command] --help" for more information about a command.');
   var result = parser.parse(args);
   if (result['help'] || result.command == null) {
     if (result.command == null) {
-      print("brc -- Network disk client based on docker register protocol.\n");
+      print("drc -- Network disk client based on docker register protocol.\n");
       print("Commands:");
       parser.commands.forEach((key, cmd) {
         print("  $key");
