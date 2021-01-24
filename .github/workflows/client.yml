@@ -51,7 +51,7 @@ jobs:
         with:
           channel: 'beta'
       - name: Setup Dart
-        uses: cedx/setup-dart@v1.3.0
+        uses: cedx/setup-dart@v2
       - run: sudo apt-get install libgl1-mesa-dev xorg-dev
         if: matrix.os == 'ubuntu-latest'
       - run: sudo wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool && sudo chmod +x /usr/local/bin/appimagetool
