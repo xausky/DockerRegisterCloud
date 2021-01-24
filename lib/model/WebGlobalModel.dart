@@ -8,9 +8,23 @@ import 'package:http/http.dart' as http;
 import 'package:docker_register_cloud/repository.dart';
 
 class WebUIPlatform extends UIPlatform {
+  String getOrigin() {
+    String origin = document
+        .querySelector('meta[name="drcd-origin"]')
+        .getAttribute('content');
+    if (origin == 'DRCD_ORIGIN') {
+      origin = window.location.origin;
+    }
+    return origin;
+  }
+
   @override
-  Future<String> link(String repository, String digest) async {
-    return "${window.location.origin}/api/download?repository=$repository&digest=$digest";
+  Future<String> link(String repository, String digest, String path) async {
+    if (digest != null) {
+      return "${getOrigin()}/d/$repository:$digest";
+    } else {
+      return "${getOrigin()}/d/$repository:$path";
+    }
   }
 
   @override
@@ -30,7 +44,7 @@ class WebUIPlatform extends UIPlatform {
   @override
   Future<void> download(
       String repository, digest, name, TransportModel transportModel) async {
-    String url = await link(repository, digest);
+    String url = await link(repository, digest, null);
     AnchorElement anchorElement = AnchorElement(href: url);
     anchorElement.setAttribute("download", name);
     anchorElement.click();
@@ -51,7 +65,7 @@ class WebUIPlatform extends UIPlatform {
   Future<void> open(String path) {}
 
   @override
-  Future<void> remove(List<String> names) {}
+  Future<void> remove(String name) {}
 }
 
 UIPlatform instanceOfGlobalModel() => WebUIPlatform();

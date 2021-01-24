@@ -103,11 +103,6 @@ class DrcFileListState extends State<DrcFileList>
           await platform.login(repository, username, password);
         }
         var value = await platform.items(widget.repository);
-        for (FileItem item in value) {
-          if (!item.name.startsWith("/")) {
-            item.name = "/" + item.name;
-          }
-        }
         setState(() {
           items = value;
         });
@@ -133,15 +128,15 @@ class DrcFileListState extends State<DrcFileList>
     }
   }
 
-  uploadOneItem(File target) async {
+  uploadOneItem(String targetPath, String parentPath) async {
     UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
     TransportModel transport =
         Provider.of<TransportModel>(context, listen: false);
-    String targetPath = target.path;
+    String name = targetPath.substring(parentPath.length + 1);
     if (Platform.isWindows) {
       targetPath = targetPath.replaceAll("\\", "/");
+      name = this.path + name.replaceAll("\\", "/");
     }
-    String name = this.path + targetPath.split("/").last;
     while (true) {
       try {
         await platform.upload(widget.repository, name, targetPath, transport);
@@ -159,20 +154,48 @@ class DrcFileListState extends State<DrcFileList>
     }
   }
 
-  onUploadClick() async {
-    List<File> targets;
-    if (Platform.isMacOS) {
-      targets = [await FilePicker.getFile(type: FileType.any)];
+  onUploadClick(bool directory) async {
+    if (directory) {
+      String directoryPath = await FilePicker.platform.getDirectoryPath();
+      if (directoryPath != null && directoryPath.isNotEmpty) {
+        List<FileSystemEntity> targets = await new Directory(directoryPath)
+            .list(recursive: true, followLinks: false)
+            .where((element) => element is File)
+            .toList();
+        for (FileSystemEntity target in targets) {
+          uploadOneItem(target.path, new Directory(directoryPath).parent.path);
+        }
+      }
     } else {
-      targets = await FilePicker.getMultiFile(type: FileType.any);
+      List<PlatformFile> targets =
+          (await FilePicker.platform.pickFiles(allowMultiple: true)).files;
+      print(targets);
+      for (PlatformFile target in targets) {
+        uploadOneItem(target.path, new File(target.path).parent.path);
+      }
     }
-    print(targets);
-    if (targets == null || targets.isEmpty) {
-      return;
-    }
-    for (File target in targets) {
-      uploadOneItem(target);
-    }
+  }
+
+  onCopyLinkClick(String digest, String name) async {
+    UIPlatform global = Provider.of<UIPlatform>(context, listen: false);
+    global.link(global.config.currentRepository, digest, name).then((value) {
+      global.writeClipy(value);
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("复制下载链接成功, 目录连接可用于 BT Web Seeder",
+            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
+      ));
+    }).catchError((err) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("获取下载链接失败，推荐用本地客户端试试",
+            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
+        action: SnackBarAction(
+          label: "下载客户端",
+          onPressed: () {
+            launch("https://github.com/xausky/DockerRegisterCloud");
+          },
+        ),
+      ));
+    });
   }
 
   onDeleteClick(String name, bool directory) async {
@@ -183,17 +206,7 @@ class DrcFileListState extends State<DrcFileList>
     if (await DrcDialogs.showConfirm("确认删除", "确定删除[$name]", context)) {
       while (true) {
         try {
-          if (directory) {
-            List<String> containsNames = List();
-            for (FileItem item in items) {
-              if (item.name.startsWith(name)) {
-                containsNames.add(item.name);
-              }
-            }
-            await context.read<UIPlatform>().remove(containsNames);
-          } else {
-            await context.read<UIPlatform>().remove([name]);
-          }
+          await context.read<UIPlatform>().remove(name);
           await onRefreshClick();
           Scaffold.of(context).showSnackBar(SnackBar(
             content: Text("删除文件成功",
@@ -248,7 +261,10 @@ class DrcFileListState extends State<DrcFileList>
         icon: Icon(Icons.keyboard_arrow_up),
         onPressed: () {
           setState(() {
-            int index = this.path.lastIndexOf("/", this.path.length - 2);
+            int index = -1;
+            if (this.path.length > 2) {
+              index = this.path.lastIndexOf("/", this.path.length - 2);
+            }
             if (index == -1) {
               this.path = "/";
             } else {
@@ -264,9 +280,19 @@ class DrcFileListState extends State<DrcFileList>
         child: IconButton(
           iconSize: 32,
           color: Theme.of(context).primaryColor,
-          icon: Icon(Icons.file_upload),
+          icon: Icon(Icons.upload_file),
           onPressed: () {
-            onUploadClick();
+            onUploadClick(false);
+          },
+        ),
+      ));
+      toolbar.add(Container(
+        child: IconButton(
+          iconSize: 32,
+          color: Theme.of(context).primaryColor,
+          icon: Icon(Icons.drive_folder_upload),
+          onPressed: () {
+            onUploadClick(true);
           },
         ),
       ));
@@ -341,9 +367,11 @@ class DrcFileListState extends State<DrcFileList>
                       });
                     },
                     child: FileItemView(
-                        name: name,
-                        directory: true,
-                        onDelete: () => onDeleteClick("$path$name/", true))),
+                      name: name,
+                      directory: true,
+                      onDelete: () => onDeleteClick("$path$name/", true),
+                      onCopyLink: () => onCopyLinkClick(null, "$path$name/"),
+                    )),
               );
             }
           }
@@ -367,6 +395,7 @@ class DrcFileListState extends State<DrcFileList>
                     digest: element.digest,
                     directory: false,
                     onDelete: () => onDeleteClick(element.name, false),
+                    onCopyLink: () => onCopyLinkClick(element.digest, null),
                   )),
             );
           }
@@ -391,6 +420,7 @@ class FileItemView extends StatefulWidget {
   final String digest;
   final int size;
   final Function onDelete;
+  final Function onCopyLink;
 
   const FileItemView(
       {Key key,
@@ -398,7 +428,8 @@ class FileItemView extends StatefulWidget {
       this.name,
       this.size,
       this.digest,
-      this.onDelete})
+      this.onDelete,
+      this.onCopyLink})
       : super(key: key);
   @override
   State<StatefulWidget> createState() {
@@ -459,7 +490,8 @@ class FileItemViewState extends State<FileItemView> {
                     UIPlatform global =
                         Provider.of<UIPlatform>(context, listen: false);
                     global
-                        .link(global.config.currentRepository, widget.digest)
+                        .link(global.config.currentRepository, widget.digest,
+                            widget.name)
                         .then((value) {
                       DrcDialogs.showPreview(context, widget.name, value);
                     });
@@ -467,57 +499,27 @@ class FileItemViewState extends State<FileItemView> {
                   tooltip: "预览文件",
                 )
               : Column(),
-          widget.directory
-              ? Column()
-              : IconButton(
-                  color: Theme.of(context).primaryColor,
-                  icon: Icon(Icons.content_copy),
-                  onPressed: () async {
-                    UIPlatform global =
-                        Provider.of<UIPlatform>(context, listen: false);
-                    global.writeClipy(widget.name);
-                    Scaffold.of(context).showSnackBar(SnackBar(
-                      content: Text("复制文件名成功",
-                          style: TextStyle(
-                              fontFamilyFallback: ['WenQuanYi Micro Hei'])),
-                    ));
-                  },
-                  tooltip: "复制文件名",
-                ),
-          widget.directory
-              ? Column()
-              : IconButton(
-                  color: Theme.of(context).primaryColor,
-                  icon: Icon(Icons.link),
-                  onPressed: () async {
-                    UIPlatform global =
-                        Provider.of<UIPlatform>(context, listen: false);
-                    global
-                        .link(global.config.currentRepository, widget.digest)
-                        .then((value) {
-                      global.writeClipy(value);
-                      Scaffold.of(context).showSnackBar(SnackBar(
-                        content: Text("复制下载链接成功",
-                            style: TextStyle(
-                                fontFamilyFallback: ['WenQuanYi Micro Hei'])),
-                      ));
-                    }).catchError((err) {
-                      Scaffold.of(context).showSnackBar(SnackBar(
-                        content: Text("获取下载链接失败，推荐用本地客户端试试",
-                            style: TextStyle(
-                                fontFamilyFallback: ['WenQuanYi Micro Hei'])),
-                        action: SnackBarAction(
-                          label: "下载客户端",
-                          onPressed: () {
-                            launch(
-                                "https://github.com/xausky/DockerRegisterCloud");
-                          },
-                        ),
-                      ));
-                    });
-                  },
-                  tooltip: "复制下载链接",
-                ),
+          IconButton(
+            color: Theme.of(context).primaryColor,
+            icon: Icon(Icons.content_copy),
+            onPressed: () async {
+              UIPlatform global =
+                  Provider.of<UIPlatform>(context, listen: false);
+              global.writeClipy(widget.name);
+              Scaffold.of(context).showSnackBar(SnackBar(
+                content: Text("复制文件名成功",
+                    style:
+                        TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
+              ));
+            },
+            tooltip: "复制文件名",
+          ),
+          IconButton(
+            color: Theme.of(context).primaryColor,
+            icon: Icon(Icons.link),
+            onPressed: widget.onCopyLink,
+            tooltip: "复制下载链接",
+          ),
           IconButton(
             color: Theme.of(context).primaryColor,
             icon: Icon(Icons.delete),

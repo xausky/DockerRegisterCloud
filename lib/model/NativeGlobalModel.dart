@@ -9,8 +9,12 @@ import 'package:flutter/services.dart';
 
 class NativeUIPlatform extends UIPlatform {
   @override
-  Future<String> link(String repository, String digest) async {
-    return Repository(auth, config, client).link(digest);
+  Future<String> link(String repository, String digest, String path) async {
+    if (digest != null) {
+      return Repository(auth, config, client).link(digest);
+    } else {
+      return "http://drcd.xausky.cn/d/$repository:$path";
+    }
   }
 
   @override
@@ -25,9 +29,9 @@ class NativeUIPlatform extends UIPlatform {
             Platform.environment['USERPROFILE'] ??
             ".") +
         "/Downloads";
-    if (Platform.isAndroid){
+    if (Platform.isAndroid) {
       target = "/sdcard/Download";
-    } else if(Platform.isIOS) {
+    } else if (Platform.isIOS) {
       target = (await getApplicationDocumentsDirectory()).path;
     }
     var targetPath = "$target/$repository/$name";
@@ -56,7 +60,8 @@ class NativeUIPlatform extends UIPlatform {
   }
 
   @override
-  Future<void> login(String repository, String username, String password) async {
+  Future<void> login(
+      String repository, String username, String password) async {
     await auth.login(repository, username, password);
     notifyListeners();
   }
@@ -69,23 +74,21 @@ class NativeUIPlatform extends UIPlatform {
   @override
   Future<void> open(String path) {
     String parent = path.substring(0, path.lastIndexOf("/"));
-    if(Platform.isLinux){
+    if (Platform.isLinux) {
       Process.run('xdg-open', [parent]);
-    } else if(Platform.isWindows){
+    } else if (Platform.isWindows) {
       Process.run('explorer', [parent.replaceAll("/", "\\")]);
-    } else if(Platform.isMacOS){
+    } else if (Platform.isMacOS) {
       Process.run('open', [parent]);
     } else {
       OpenFile.open(path);
-    } 
+    }
   }
 
   @override
-  Future<void> remove(List<String> names) async {
+  Future<void> remove(String name) async {
     Translation translation = await repo.begin();
-    for(String name in names){
-      await repo.remove(translation, name);
-    }
+    await repo.remove(translation, name);
     await repo.commit(translation);
   }
 }

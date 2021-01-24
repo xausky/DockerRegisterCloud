@@ -5,9 +5,14 @@ import 'package:flutter/foundation.dart'
     show debugDefaultTargetPlatformOverride;
 
 class DrcPreview extends StatefulWidget {
-  static Set<String> imageFormats = Set.of(["webp", "bmp", "jpg", "png", "gif"]);
-  static Set<String> videoFormats = debugDefaultTargetPlatformOverride == TargetPlatform.fuchsia ? Set.of([]) : Set.of(["mp4", "3gp", "avi", "ogg", "mov"]);
-  static Set<String> previewFormats = Set.from(imageFormats)..addAll(videoFormats);
+  static Set<String> imageFormats =
+      Set.of(["webp", "bmp", "jpg", "png", "gif"]);
+  static Set<String> videoFormats =
+      debugDefaultTargetPlatformOverride == TargetPlatform.fuchsia
+          ? Set.of([])
+          : Set.of(["mp4", "3gp", "avi", "ogg", "mov"]);
+  static Set<String> previewFormats = Set.from(imageFormats)
+    ..addAll(videoFormats);
 
   final String name;
   final String url;
@@ -68,8 +73,8 @@ class _DrcPreviewState extends State<DrcPreview> {
   }
 
   @override
-  void deactivate(){
-    if(_controller != null){
+  void deactivate() {
+    if (_controller != null) {
       _controller.pause();
     }
     super.deactivate();

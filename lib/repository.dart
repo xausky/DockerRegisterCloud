@@ -76,27 +76,39 @@ class Repository {
         body: json.encode(manifest));
     cachedFiles.remove(translation.repository);
     if (response.statusCode >= 300 || response.statusCode < 200) {
-      throw "Repository start upload status code ${response.statusCode} ${response.body}";
+      throw "Repository put manifests status code ${response.statusCode} ${response.body}";
     }
   }
 
   Future<void> remove(Translation translation, String name) async {
-    FileItem target;
-    for (FileItem item in translation.config.fileItems) {
-      if (item.name == name) {
-        target = item;
+    Set<String> originHashs =
+        await Stream.fromIterable(translation.config.fileItems)
+            .map((event) => event.digest)
+            .toSet();
+    int originSize = translation.config.fileItems.length;
+    translation.config.fileItems.removeWhere((item) =>
+        item.name == name ||
+        (item.name.startsWith(name) && name.endsWith("/")) ||
+        name == '*');
+    Set<String> currentHashs =
+        await Stream.fromIterable(translation.config.fileItems)
+            .map((event) => event.digest)
+            .toSet();
+    int currentSize = translation.config.fileItems.length;
+    if (originSize == currentSize) {
+      throw "No file match $name";
+    }
+    // originHashs -> removedHashs
+    originHashs.removeAll(currentHashs);
+    originHashs.forEach((element) async {
+      Response response = await client.delete(
+          "https://${translation.server}/v2/${translation.name}/blobs/${element}",
+          headers: {"repository": translation.repository});
+      if (response.statusCode >= 300 || response.statusCode < 200) {
+        print(
+            "Repository delete status code ${response.statusCode} ${response.body}");
       }
-    }
-    if (target == null) {
-      throw "File item not found $name";
-    }
-    Response response = await client.delete(
-        "https://${translation.server}/v2/${translation.name}/blobs/${target.digest}",
-        headers: {"repository": translation.repository});
-    if (response.statusCode >= 300 || response.statusCode < 200) {
-      throw "Repository start upload status code ${response.statusCode} ${response.body}";
-    }
-    translation.config.fileItems.remove(target);
+    });
   }
 
   Future<void> pullWithName(Translation translation, String name, String path,
@@ -128,6 +140,9 @@ class Repository {
 
   Future<void> upload(Translation translation, String name, String path,
       TransportProgressListener listener) async {
+    if (!name.startsWith("/") || name.contains("*") || name.contains("//")) {
+      throw "name must not contains * or // and start with /";
+    }
     String url = await beginUpload(translation);
     Future<Digest> hashFuture = sha256.bind(File(path).openRead()).first;
     Uri uploadUri = Uri.parse("$url");

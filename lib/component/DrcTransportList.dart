@@ -103,13 +103,21 @@ class TransportItemViewState extends State<TransportItemView> {
         icon = Icons.file_upload;
         break;
     }
-    int speed = ((widget.item.current - latestReviced) /
-            (widget.item.end + 1 - latestUpdateTime) *
-            1000)
-        .round();
-    int averageSpeed =
-        (widget.item.current / (widget.item.end - widget.item.start) * 1000)
-            .round();
+    print(widget.item.end + 1 - latestUpdateTime);
+    int speed = 0;
+    if (widget.item.end - latestUpdateTime > 0) {
+      speed = ((widget.item.current - latestReviced) /
+              (widget.item.end - latestUpdateTime) *
+              1000)
+          .round();
+    }
+    int averageSpeed = 0;
+    if (widget.item.end - widget.item.start > 0) {
+      averageSpeed = (widget.item.current /
+              (widget.item.end + 1 - widget.item.start) *
+              1000)
+          .round();
+    }
     latestReviced = widget.item.current;
     latestUpdateTime = widget.item.end;
     return Card(
