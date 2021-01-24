@@ -65,11 +65,13 @@ jobs:
       - run: flutter upgrade
       - run: $(go env GOPATH)/bin/hover build ${{ matrix.packaging }}
         shell: bash
+        continue-on-error: true
       - name: Upload Command Tools
         uses: actions/upload-artifact@v2
         with:
           name: drc-cli-${{ matrix.platfrom }}
           path: build/${{ matrix.output-name }}
+        continue-on-error: true
       - name: Upload Client
         uses: actions/upload-artifact@v2
         with:
