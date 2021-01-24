@@ -1,6 +1,6 @@
 name: docker_register_cloud
 description: The network disk client based on the Docker warehouse protocol can use many free container warehouse services for network disk storage, download and sharing.
-version: 1.5.0
+version: 1.6.0
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
