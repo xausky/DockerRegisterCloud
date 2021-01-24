@@ -9,14 +9,10 @@ jobs:
         uses: subosito/flutter-action@v1
         with:
           channel: 'beta'
-      - name: Setup Dart
-        uses: cedx/setup-dart@v2
-        with:
-          release-channel: 'beta'
       - run: flutter config --enable-web
       - run: flutter doctor
       - run: flutter pub get
-      - run: dart2native bin/drcd.dart -v -o docker/drcd
+      - run: dart compile exe bin/drcd.dart -v -o docker/drcd
       - run: flutter build web
       - run: mv build/web docker/web
       - run: echo $DOCKER_PASSWORD | docker login -u xausky --password-stdin

@@ -50,10 +50,6 @@ jobs:
         uses: subosito/flutter-action@v1
         with:
           channel: 'beta'
-      - name: Setup Dart
-        uses: cedx/setup-dart@v2
-        with:
-          release-channel: 'beta'
       - run: sudo apt-get install libgl1-mesa-dev xorg-dev
         if: matrix.os == 'ubuntu-latest'
       - run: sudo wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool && sudo chmod +x /usr/local/bin/appimagetool
@@ -62,7 +58,7 @@ jobs:
         if: matrix.os == 'windows-latest'
       - run: mkdir build
       - run: flutter pub get
-      - run: dart2native bin/drc.dart -v -o build/${{ matrix.output-name }}
+      - run: dart compile exe bin/drc.dart -v -o build/${{ matrix.output-name }}
       - uses: actions/setup-go@v2
       - name: Install Go-Flutter Hover
         run: GO111MODULE=on go get -u -a github.com/go-flutter-desktop/hover
