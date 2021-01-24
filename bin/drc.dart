@@ -7,11 +7,11 @@ import 'package:docker_register_cloud/helper/DrcHttpClient.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:filesize/filesize.dart';
 
-void main(List<String> args) async {
+main(List<String> args) async {
   BasePlatform platform = BasePlatform();
   GlobalConfig config = GlobalConfig();
   dynamic configContent = await platform.load('config');
-  if(configContent != null){
+  if (configContent != null) {
     config = GlobalConfig.fromJson(configContent);
   }
   AuthManager auth = AuthManager(platform, config);
@@ -78,8 +78,11 @@ void main(List<String> args) async {
       break;
     case "push":
       Translation translation = await repository.begin();
-      await repository.upload(translation, result.command.arguments[1],
-          result.command.arguments[0], PrintUploadTransportProgressListener(result.command.arguments[1]));
+      await repository.upload(
+          translation,
+          result.command.arguments[1],
+          result.command.arguments[0],
+          PrintUploadTransportProgressListener(result.command.arguments[1]));
       await repository.commit(translation);
       break;
     case "ls":
@@ -93,8 +96,11 @@ void main(List<String> args) async {
     case "pull":
       int start = DateTime.now().millisecondsSinceEpoch;
       Translation translation = await repository.begin();
-      await repository.pullWithName(translation, result.command.arguments[0],
-          result.command.arguments[1], PrintDownloadTransportProgressListener(result.command.arguments[0]));
+      await repository.pullWithName(
+          translation,
+          result.command.arguments[0],
+          result.command.arguments[1],
+          PrintDownloadTransportProgressListener(result.command.arguments[0]));
       int end = DateTime.now().millisecondsSinceEpoch;
       int size = await File(result.command.arguments[1]).length();
       num time = (end - start) / 1000;
@@ -131,7 +137,7 @@ class PrintDownloadTransportProgressListener extends TransportProgressListener {
   final String name;
   int start;
 
-  PrintDownloadTransportProgressListener(this.name){
+  PrintDownloadTransportProgressListener(this.name) {
     this.start = DateTime.now().millisecondsSinceEpoch;
   }
 
@@ -139,14 +145,16 @@ class PrintDownloadTransportProgressListener extends TransportProgressListener {
   void onProgess(int current, int total) {
     var end = DateTime.now().millisecondsSinceEpoch;
     var speed = (current / (end - start) * 1000).round();
-    print("Downloading $name received ${filesize(current)} total ${filesize(total)} speed ${filesize(speed)}/s");
+    print(
+        "Downloading $name received ${filesize(current)} total ${filesize(total)} speed ${filesize(speed)}/s");
   }
 
   @override
   void onSuccess(int total) {
     var end = DateTime.now().millisecondsSinceEpoch;
     var speed = (total / (end - start) * 1000).round();
-    print("Downloaded $name total ${filesize(total)} speed ${filesize(speed)}/s");
+    print(
+        "Downloaded $name total ${filesize(total)} speed ${filesize(speed)}/s");
   }
 }
 
@@ -154,7 +162,7 @@ class PrintUploadTransportProgressListener extends TransportProgressListener {
   final String name;
   int start;
 
-  PrintUploadTransportProgressListener(this.name){
+  PrintUploadTransportProgressListener(this.name) {
     this.start = DateTime.now().millisecondsSinceEpoch;
   }
 
@@ -162,7 +170,8 @@ class PrintUploadTransportProgressListener extends TransportProgressListener {
   void onProgess(int current, int total) {
     var end = DateTime.now().millisecondsSinceEpoch;
     var speed = (current / (end - start) * 1000).round();
-    print("Uploading $name uploaded ${filesize(current)} total ${filesize(total)} speed ${filesize(speed)}/s");
+    print(
+        "Uploading $name uploaded ${filesize(current)} total ${filesize(total)} speed ${filesize(speed)}/s");
   }
 
   @override

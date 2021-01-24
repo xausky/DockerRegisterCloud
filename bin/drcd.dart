@@ -6,7 +6,6 @@ import 'package:docker_register_cloud/auth.dart';
 import 'package:docker_register_cloud/helper/DrcHttpClient.dart';
 import 'package:docker_register_cloud/repository.dart';
 import 'package:file/local.dart';
-import 'dart:io' show Platform;
 
 main() async {
   BasePlatform platform = BasePlatform();
