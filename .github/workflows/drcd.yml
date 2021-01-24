@@ -5,10 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: subosito/flutter-action@v1
-      - uses: cedx/setup-dart@v1.3.0
-      - run: flutter channel beta
-      - run: flutter upgrade
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          channel: 'beta'
+      - name: Setup Dart
+        uses: cedx/setup-dart@v2
+        with:
+          release-channel: 'beta'
       - run: flutter config --enable-web
       - run: flutter doctor
       - run: flutter pub get

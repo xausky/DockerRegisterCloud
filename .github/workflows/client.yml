@@ -15,7 +15,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
         with:
-          channel: 'stable'
+          channel: 'beta'
       - name: Build APK
         run: flutter build apk --target-platform android-arm
         env:
@@ -52,6 +52,8 @@ jobs:
           channel: 'beta'
       - name: Setup Dart
         uses: cedx/setup-dart@v2
+        with:
+          release-channel: 'beta'
       - run: sudo apt-get install libgl1-mesa-dev xorg-dev
         if: matrix.os == 'ubuntu-latest'
       - run: sudo wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool && sudo chmod +x /usr/local/bin/appimagetool
