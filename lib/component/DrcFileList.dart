@@ -135,8 +135,8 @@ class DrcFileListState extends State<DrcFileList>
     String name = targetPath.substring(parentPath.length + 1);
     if (Platform.isWindows) {
       targetPath = targetPath.replaceAll("\\", "/");
-      name = this.path + name.replaceAll("\\", "/");
     }
+    name = this.path + name.replaceAll("\\", "/");
     while (true) {
       try {
         await platform.upload(widget.repository, name, targetPath, transport);
@@ -180,12 +180,12 @@ class DrcFileListState extends State<DrcFileList>
     UIPlatform global = Provider.of<UIPlatform>(context, listen: false);
     global.link(global.config.currentRepository, digest, name).then((value) {
       global.writeClipy(value);
-      Scaffold.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("复制下载链接成功, 目录连接可用于 BT Web Seeder",
             style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
       ));
     }).catchError((err) {
-      Scaffold.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text("获取下载链接失败，推荐用本地客户端试试",
             style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
         action: SnackBarAction(
@@ -322,8 +322,7 @@ class DrcFileListState extends State<DrcFileList>
         },
       ),
     ));
-    toolbar.add(Flexible(
-        child: TextField(
+    Widget addressBar = TextField(
       controller: repositoryController,
       style: TextStyle(
         fontSize: 16,
@@ -334,15 +333,16 @@ class DrcFileListState extends State<DrcFileList>
           border: OutlineInputBorder(),
           labelText: '仓库地址'),
       onSubmitted: (value) => onRepositorySubmitted(value),
-    )));
-    headers.add(
-      Container(
-          margin: EdgeInsets.all(8),
-          height: 46,
-          child: Row(
-            children: toolbar,
-          )),
     );
+
+    headers.add(Container(
+        margin: EdgeInsets.all(8),
+        child: Column(children: [
+          addressBar,
+          Row(
+            children: toolbar,
+          )
+        ])));
     if (items == null) {
       headers.add(SizedBox(
         child: LinearProgressIndicator(),
