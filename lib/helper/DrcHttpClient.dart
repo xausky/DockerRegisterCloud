@@ -9,7 +9,7 @@ class DrcHttpClient extends BaseClient {
   final AuthManager auth;
   final GlobalConfig config;
   final Map<String, String> cachedTokens = Map();
-  final Client _inner = Client();
+  static Client _inner = Client();
 
   DrcHttpClient(this.auth, this.config);
 
