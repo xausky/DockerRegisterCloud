@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_framework/http.dart';
 import 'package:angel_static/angel_static.dart';
@@ -82,5 +84,9 @@ main() async {
     res.redirect(link);
   });
   app.fallback(virtualDirectory.handleRequest);
-  await http.startServer('0.0.0.0', 3000);
+  var port = 3000;
+  if (Platform.environment["PORT"] != null) {
+    port = int.parse(Platform.environment["PORT"]);
+  }
+  await http.startServer('0.0.0.0', port);
 }

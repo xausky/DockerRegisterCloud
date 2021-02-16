@@ -80,6 +80,21 @@ class Repository {
     }
   }
 
+  Future<void> rename(Translation translation, String originName, String targetName) async {
+    if (!targetName.startsWith("/") || targetName.contains("*") || targetName.contains("//")) {
+      throw "targetName [$targetName] must not contains * or // and start with /";
+    }
+    if(translation.config.fileItems.firstWhere((element) => element.name == targetName, orElse: () => null) != null){
+      throw "targetName [$targetName] already exists in repository";
+    }
+    FileItem item = translation.config.fileItems.firstWhere((element) => element.name == originName, orElse: () => null);
+    if(item == null){
+      throw "originName [$originName] not found in repository";
+    }
+    item.name = targetName;
+  }
+  
+
   Future<void> remove(Translation translation, String name) async {
     Set<String> originHashs =
         await Stream.fromIterable(translation.config.fileItems)
@@ -141,7 +156,7 @@ class Repository {
   Future<void> upload(Translation translation, String name, String path,
       TransportProgressListener listener) async {
     if (!name.startsWith("/") || name.contains("*") || name.contains("//")) {
-      throw "name must not contains * or // and start with /";
+      throw "name [$name] must not contains * or // and start with /";
     }
     String url = await beginUpload(translation);
     Future<Digest> hashFuture = sha256.bind(File(path).openRead()).first;

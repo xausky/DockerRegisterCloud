@@ -33,6 +33,9 @@ main(List<String> args) async {
   parser
       .addCommand("ls")
       .addSeparator("List the current repository file list.\ndrc list");
+  parser
+      .addCommand("mv")
+      .addSeparator("rename a file from the current repository.\ndrc mv <originName> <targetName>");
   parser.addCommand("use").addSeparator(
       "Switch current repository.\ndrc use <repository>\teg. drc use registry-1.docker.io/xausky/public");
   parser.addCommand("repos").addSeparator("List repository list.\ndrc repos");
@@ -92,6 +95,11 @@ main(List<String> args) async {
         fileSizeText = " " * (10 - fileSizeText.length) + fileSizeText;
         print("${item.digest}  $fileSizeText  ${item.name}");
       }
+      break;
+    case "mv":
+      Translation translation = await repository.begin();
+      await repository.rename(translation, result.command.arguments[0], result.command.arguments[1]);
+      await repository.commit(translation);
       break;
     case "pull":
       int start = DateTime.now().millisecondsSinceEpoch;
