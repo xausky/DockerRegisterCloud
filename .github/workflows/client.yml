@@ -46,15 +46,13 @@ jobs:
         uses: actions/checkout@v2
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
+        with:
+          channel: 'master'
       - run: sudo apt-get install libgl1-mesa-dev xorg-dev
         if: matrix.os == 'ubuntu-latest'
       - run: mkdir build
       - run: flutter pub get
       - run: dart compile exe bin/drc.dart -v -o build/${{ matrix.output-name }}
-      - uses: actions/setup-go@v2
-      - name: Install Go-Flutter Hover
-        run: GO111MODULE=on go get -u -a github.com/go-flutter-desktop/hover
-        shell: bash
       - run: flutter build ${{ matrix.packaging }}
         shell: bash
       - name: Upload Command Tools
