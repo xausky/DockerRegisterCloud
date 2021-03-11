@@ -41,6 +41,8 @@ jobs:
     steps:
       - name: Check Out Code
         uses: actions/checkout@v2
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v3
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
       - run: mkdir build
