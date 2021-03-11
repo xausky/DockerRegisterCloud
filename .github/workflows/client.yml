@@ -32,15 +32,12 @@ jobs:
           - os: ubuntu-latest
             output-name: drc
             platfrom: linux
-            packaging: linux
           - os: macOS-latest
             output-name: drc
-            platfrom: darwin
-            packaging: macos
+            platfrom: macos
           - os: windows-latest
             output-name: drc.exe
             platfrom: windows
-            packaging: windows
     steps:
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -49,10 +46,10 @@ jobs:
       - run: mkdir build
       - run: flutter channel master
       - run: flutter upgrade
+      - run: flutter config --enable-${{ matrix.platfrom }}-desktop
       - run: flutter pub get
       - run: dart compile exe bin/drc.dart -v -o build/${{ matrix.output-name }}
-      - run: flutter build ${{ matrix.packaging }}
-        shell: bash
+      - run: flutter build ${{ matrix.platfrom }}
       - name: Upload Command Tools
         uses: actions/upload-artifact@v2
         with:
@@ -62,4 +59,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: drc-client-${{ matrix.platfrom }}
-          path: build/${{ matrix.packaging }}/release/bundle
+          path: build/${{ matrix.platfrom }}/release/bundle
