@@ -5,8 +5,8 @@ import 'package:docker_register_cloud/component/DrcPreview.dart';
 import 'package:docker_register_cloud/model/GlobalModel.dart';
 import 'package:docker_register_cloud/model/TransportModel.dart';
 import 'package:docker_register_cloud/repository.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:filesize/filesize.dart';
+import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -155,8 +155,16 @@ class DrcFileListState extends State<DrcFileList>
   }
 
   onUploadClick(bool directory) async {
+    UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
     if (directory) {
-      String directoryPath = await FilePicker.platform.getDirectoryPath();
+      String directoryPath = await FilesystemPicker.open(
+        title: '选择上传文件夹',
+        context: context,
+        rootDirectory: Directory(await platform.downloadPath()),
+        fsType: FilesystemType.folder,
+        pickText: '上传这个文件夹',
+        folderIconColor: Colors.teal,
+      );
       if (directoryPath != null && directoryPath.isNotEmpty) {
         List<FileSystemEntity> targets = await new Directory(directoryPath)
             .list(recursive: true, followLinks: false)
@@ -167,11 +175,17 @@ class DrcFileListState extends State<DrcFileList>
         }
       }
     } else {
-      List<PlatformFile> targets =
-          (await FilePicker.platform.pickFiles(allowMultiple: true)).files;
-      print(targets);
-      for (PlatformFile target in targets) {
-        uploadOneItem(target.path, new File(target.path).parent.path);
+      String targetPath = await FilesystemPicker.open(
+        title: 'Open file',
+        context: context,
+        rootDirectory: Directory(await platform.downloadPath()),
+        fsType: FilesystemType.file,
+        folderIconColor: Colors.teal,
+        //allowedExtensions: ['.txt'],
+        fileTileSelectMode: FileTileSelectMode.wholeTile,
+      );
+      if(targetPath != null && targetPath.isNotEmpty){
+        uploadOneItem(targetPath, new File(targetPath).parent.path);
       }
     }
   }

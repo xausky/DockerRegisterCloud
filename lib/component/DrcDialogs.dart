@@ -73,7 +73,7 @@ class DrcDialogs {
               ),
               decoration:
                   InputDecoration(isDense: true, border: OutlineInputBorder()),
-              onChanged: (value) => input = value,
+              onChanged: (value) {print(input); input = value;},
             ),
           ),
           actions: <Widget>[

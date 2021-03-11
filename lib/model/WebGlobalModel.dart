@@ -57,15 +57,33 @@ class WebUIPlatform extends UIPlatform {
 
   @override
   Future<void> upload(
-      String repository, name, path, TransportModel transport) {}
+      String repository, name, path, TransportModel transport)  {
+    // Web side no implemented
+    throw UnimplementedError();
+  }
   @override
-  Future<void> login(String repository, String username, String password) {}
+  Future<void> login(String repository, String username, String password)  {
+    // Web side no implemented
+    throw UnimplementedError();
+  }
 
   @override
-  Future<void> open(String path) {}
+  Future<void> open(String path)  {
+    // Web side no implemented
+    throw UnimplementedError();
+  }
 
   @override
-  Future<void> remove(String name) {}
+  Future<void> remove(String name)  {
+    // Web side no implemented
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<String> downloadPath() {
+    // Web side no implemented
+    throw UnimplementedError();
+  }
 }
 
 UIPlatform instanceOfGlobalModel() => WebUIPlatform();
