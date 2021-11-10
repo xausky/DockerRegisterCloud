@@ -49,13 +49,9 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
       - run: mkdir build
-      - run: flutter channel master
-      - run: flutter upgrade
       - run: flutter config --enable-${{ matrix.platfrom }}-desktop
       - run: flutter pub get
       - run: dart compile exe bin/drc.dart -v -o build/${{ matrix.output-name }}
-      - run: flutter channel stable
-      - run: flutter upgrade
       - run: flutter build ${{ matrix.platfrom }}
       - name: Upload Command Tools
         uses: actions/upload-artifact@v2
