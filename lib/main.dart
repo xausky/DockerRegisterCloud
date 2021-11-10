@@ -19,7 +19,7 @@ class DrcApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!requestPermission && (Platform.isAndroid || Platform.isIOS)) {
+    if (!requestPermission && !kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       requestPermission = true;
       Permission.storage.request().then((value) {
         if (PermissionStatus.granted != value) {
@@ -39,7 +39,7 @@ class DrcApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Docker Register Cloud',
         theme: ThemeData(
-          fontFamily: 'WenQuanYi Micro Hei',
+          fontFamily: 'DroidSansFallback',
           primarySwatch: Colors.blue,
           primaryColorLight: Colors.blueGrey
         ),

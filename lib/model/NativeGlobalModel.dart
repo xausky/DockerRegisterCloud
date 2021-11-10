@@ -59,7 +59,7 @@ class NativeUIPlatform extends UIPlatform {
   }
 
   @override
-  void writeClipy(String content) async {
+  void writeClipboard(String content) async {
     Clipboard.setData(ClipboardData(text: content));
   }
 

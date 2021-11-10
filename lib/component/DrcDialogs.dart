@@ -41,11 +41,11 @@ class DrcDialogs {
             )
           ]),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text("取消"),
               onPressed: () => Navigator.of(context).pop(), // 关闭对话框
             ),
-            FlatButton(
+            TextButton(
               child: Text("登录"),
               onPressed: () {
                 Navigator.of(context).pop([username, password]);
@@ -77,11 +77,11 @@ class DrcDialogs {
             ),
           ),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text("取消"),
               onPressed: () => Navigator.of(context).pop(), // 关闭对话框
             ),
-            FlatButton(
+            TextButton(
               child: Text("确定"),
               onPressed: () {
                 Navigator.of(context).pop(input);
@@ -102,11 +102,11 @@ class DrcDialogs {
           title: Text(title),
           content: Text(content),
           actions: <Widget>[
-            FlatButton(
+            TextButton(
               child: Text("取消"),
               onPressed: () => Navigator.of(context).pop(false), // 关闭对话框
             ),
-            FlatButton(
+            TextButton(
               child: Text("确定"),
               onPressed: () {
                 Navigator.of(context).pop(true);
