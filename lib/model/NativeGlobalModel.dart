@@ -25,16 +25,8 @@ class NativeUIPlatform extends UIPlatform {
   @override
   Future<void> download(
       String repository, digest, name, TransportModel transport) async {
-    var target = (Platform.environment['HOME'] ??
-            Platform.environment['USERPROFILE'] ??
-            ".") +
-        "/Downloads";
-    if (Platform.isAndroid) {
-      target = "/sdcard/Download";
-    } else if (Platform.isIOS) {
-      target = (await getApplicationDocumentsDirectory()).path;
-    }
-    var targetPath = "$target/$repository/$name";
+    String target = await downloadPath();
+    String targetPath = "$target/$repository/$name";
     print(targetPath);
     if (!await File(targetPath).parent.exists()) {
       File(targetPath).parent.create(recursive: true);
@@ -67,7 +59,7 @@ class NativeUIPlatform extends UIPlatform {
   }
 
   @override
-  void writeClipy(String content) async {
+  void writeClipboard(String content) async {
     Clipboard.setData(ClipboardData(text: content));
   }
 
@@ -90,6 +82,20 @@ class NativeUIPlatform extends UIPlatform {
     Translation translation = await repo.begin();
     await repo.remove(translation, name);
     await repo.commit(translation);
+  }
+
+  @override
+  Future<String> downloadPath() async {
+    var target = (Platform.environment['HOME'] ??
+            Platform.environment['USERPROFILE'] ??
+            ".") +
+        "/Downloads";
+    if (Platform.isAndroid) {
+      target = "/sdcard/Download";
+    } else if (Platform.isIOS) {
+      target = (await getApplicationDocumentsDirectory()).path;
+    }
+    return target;
   }
 }
 

@@ -64,8 +64,9 @@ abstract class UIPlatform extends ChangeNotifier with BasePlatform {
   Future<void> upload(String repository, name, path, TransportModel transport);
   Future<void> remove(String name);
   Future<void> open(String path);
+  Future<String> downloadPath();
 
-  void writeClipy(String content);
+  void writeClipboard(String content);
 
   Future<dynamic> load(String key) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();

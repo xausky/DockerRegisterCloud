@@ -14,8 +14,6 @@ jobs:
           java-version: 1.8
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
-        with:
-          channel: 'beta'
       - name: Build APK
         run: flutter build apk --target-platform android-arm
         env:
@@ -34,47 +32,34 @@ jobs:
           - os: ubuntu-latest
             output-name: drc
             platfrom: linux
-            packaging: linux-appimage
+            bundle-path: build/linux/release/bundle
           - os: macOS-latest
             output-name: drc
-            platfrom: darwin
-            packaging: darwin-dmg
+            platfrom: macos
+            bundle-path: build
           - os: windows-latest
             output-name: drc.exe
             platfrom: windows
-            packaging: windows-msi
+            bundle-path: build/windows/runner/release
     steps:
       - name: Check Out Code
         uses: actions/checkout@v2
+      - run: sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev libblkid-dev liblzma-dev
+        if: matrix.os == 'ubuntu-latest'
       - name: Setup Flutter
         uses: subosito/flutter-action@v1
-      - run: sudo apt-get install libgl1-mesa-dev xorg-dev
-        if: matrix.os == 'ubuntu-latest'
-      - run: sudo wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool && sudo chmod +x /usr/local/bin/appimagetool
-        if: matrix.os == 'ubuntu-latest'
-      - run: echo "C:\Program Files (x86)\WiX Toolset v3.11\bin" >> $env:GITHUB_PATH
-        if: matrix.os == 'windows-latest'
       - run: mkdir build
+      - run: flutter config --enable-${{ matrix.platfrom }}-desktop
       - run: flutter pub get
       - run: dart compile exe bin/drc.dart -v -o build/${{ matrix.output-name }}
-      - uses: actions/setup-go@v2
-      - name: Install Go-Flutter Hover
-        run: GO111MODULE=on go get -u -a github.com/go-flutter-desktop/hover
-        shell: bash
-      - run: flutter channel beta
-      - run: flutter upgrade
-      - run: $(go env GOPATH)/bin/hover build ${{ matrix.packaging }}
-        shell: bash
-        continue-on-error: true
+      - run: flutter build ${{ matrix.platfrom }}
       - name: Upload Command Tools
         uses: actions/upload-artifact@v2
         with:
           name: drc-cli-${{ matrix.platfrom }}
           path: build/${{ matrix.output-name }}
-        continue-on-error: true
       - name: Upload Client
         uses: actions/upload-artifact@v2
         with:
           name: drc-client-${{ matrix.platfrom }}
-          path: go/build/outputs/${{ matrix.packaging }}-release
-        continue-on-error: true
+          path: ${{ matrix.bundle-path }}

@@ -5,8 +5,8 @@ import 'package:docker_register_cloud/component/DrcPreview.dart';
 import 'package:docker_register_cloud/model/GlobalModel.dart';
 import 'package:docker_register_cloud/model/TransportModel.dart';
 import 'package:docker_register_cloud/repository.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:filesize/filesize.dart';
+import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +14,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 class DrcFileList extends StatefulWidget {
   final String repository;
+
   DrcFileList(this.repository);
+
   @override
   State<StatefulWidget> createState() {
     return DrcFileListState();
@@ -59,10 +61,9 @@ class DrcFileListState extends State<DrcFileList>
     if (transport.items.containsKey("${widget.repository}:${item.name}")) {
       if (transport.items["${widget.repository}:${item.name}"].state !=
           TransportStateType.COMPLETED) {
-        Scaffold.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
             "该文件已经在下载列表不可重复下载。",
-            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei']),
           ),
         ));
         return;
@@ -78,9 +79,8 @@ class DrcFileListState extends State<DrcFileList>
       await platform.download(
           widget.repository, item.digest, item.name, transport);
     } catch (err) {
-      Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text("获取下载链接失败，推荐用本地客户端试试",
-            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("获取下载链接失败，推荐用本地客户端试试"),
         action: SnackBarAction(
           label: "下载客户端",
           onPressed: () {
@@ -154,24 +154,28 @@ class DrcFileListState extends State<DrcFileList>
     }
   }
 
-  onUploadClick(bool directory) async {
-    if (directory) {
-      String directoryPath = await FilePicker.platform.getDirectoryPath();
-      if (directoryPath != null && directoryPath.isNotEmpty) {
-        List<FileSystemEntity> targets = await new Directory(directoryPath)
+  onUploadClick() async {
+    UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
+    String targetPath = await FilesystemPicker.open(
+      title: '选择文件/文件夹',
+      context: context,
+      rootDirectory: Directory(await platform.downloadPath()),
+      fsType: FilesystemType.all,
+      folderIconColor: Colors.teal,
+      fileTileSelectMode: FileTileSelectMode.checkButton,
+    );
+
+    if (targetPath != null && targetPath.isNotEmpty) {
+      if(FileSystemEntity.typeSync(targetPath) == FileSystemEntityType.file){
+        uploadOneItem(targetPath, new File(targetPath).parent.path);
+      } else if(FileSystemEntity.typeSync(targetPath) == FileSystemEntityType.directory){
+        List<FileSystemEntity> targets = await new Directory(targetPath)
             .list(recursive: true, followLinks: false)
             .where((element) => element is File)
             .toList();
         for (FileSystemEntity target in targets) {
-          uploadOneItem(target.path, new Directory(directoryPath).parent.path);
+          uploadOneItem(target.path, new Directory(targetPath).parent.path);
         }
-      }
-    } else {
-      List<PlatformFile> targets =
-          (await FilePicker.platform.pickFiles(allowMultiple: true)).files;
-      print(targets);
-      for (PlatformFile target in targets) {
-        uploadOneItem(target.path, new File(target.path).parent.path);
       }
     }
   }
@@ -179,15 +183,12 @@ class DrcFileListState extends State<DrcFileList>
   onCopyLinkClick(String digest, String name) async {
     UIPlatform global = Provider.of<UIPlatform>(context, listen: false);
     global.link(global.config.currentRepository, digest, name).then((value) {
-      global.writeClipy(value);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("复制下载链接成功, 目录连接可用于 BT Web Seeder",
-            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
-      ));
+      global.writeClipboard(value);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("复制下载链接成功, 目录连接可用于 BT Web Seeder")));
     }).catchError((err) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("获取下载链接失败，推荐用本地客户端试试",
-            style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
+        content: Text("获取下载链接失败，推荐用本地客户端试试"),
         action: SnackBarAction(
           label: "下载客户端",
           onPressed: () {
@@ -208,9 +209,8 @@ class DrcFileListState extends State<DrcFileList>
         try {
           await context.read<UIPlatform>().remove(name);
           await onRefreshClick();
-          Scaffold.of(context).showSnackBar(SnackBar(
-            content: Text("删除文件成功",
-                style: TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("删除文件成功"),
           ));
           break;
         } on PermissionDeniedException catch (e) {
@@ -280,19 +280,9 @@ class DrcFileListState extends State<DrcFileList>
         child: IconButton(
           iconSize: 32,
           color: Theme.of(context).primaryColor,
-          icon: Icon(Icons.upload_file),
-          onPressed: () {
-            onUploadClick(false);
-          },
-        ),
-      ));
-      toolbar.add(Container(
-        child: IconButton(
-          iconSize: 32,
-          color: Theme.of(context).primaryColor,
           icon: Icon(Icons.drive_folder_upload),
           onPressed: () {
-            onUploadClick(true);
+            onUploadClick();
           },
         ),
       ));
@@ -431,6 +421,7 @@ class FileItemView extends StatefulWidget {
       this.onDelete,
       this.onCopyLink})
       : super(key: key);
+
   @override
   State<StatefulWidget> createState() {
     return FileItemViewState();
@@ -505,12 +496,9 @@ class FileItemViewState extends State<FileItemView> {
             onPressed: () async {
               UIPlatform global =
                   Provider.of<UIPlatform>(context, listen: false);
-              global.writeClipy(widget.name);
-              Scaffold.of(context).showSnackBar(SnackBar(
-                content: Text("复制文件名成功",
-                    style:
-                        TextStyle(fontFamilyFallback: ['WenQuanYi Micro Hei'])),
-              ));
+              global.writeClipboard(widget.name);
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text("复制文件名成功")));
             },
             tooltip: "复制文件名",
           ),

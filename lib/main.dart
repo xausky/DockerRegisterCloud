@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:docker_register_cloud/component/DrcFileList.dart';
 import 'package:docker_register_cloud/component/DrcRepositoryList.dart';
 import 'package:docker_register_cloud/component/DrcTransportList.dart';
@@ -17,7 +19,7 @@ class DrcApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!requestPermission) {
+    if (!requestPermission && !kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       requestPermission = true;
       Permission.storage.request().then((value) {
         if (PermissionStatus.granted != value) {
@@ -37,7 +39,7 @@ class DrcApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Docker Register Cloud',
         theme: ThemeData(
-          fontFamily: 'WenQuanYi Micro Hei',
+          fontFamily: 'DroidSansFallback',
           primarySwatch: Colors.blue,
           primaryColorLight: Colors.blueGrey
         ),
