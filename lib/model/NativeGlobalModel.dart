@@ -97,6 +97,31 @@ class NativeUIPlatform extends UIPlatform {
     }
     return target;
   }
+
+  @override
+  Future<Map<String, Directory>> pickRootDirectories() async {
+    Map<String, Directory> result = Map();
+    String downloadPath = await this.downloadPath();
+    result.putIfAbsent("Downloads", () => Directory(downloadPath));
+    if (Platform.isWindows) {
+      ProcessResult runResult =
+          await Process.run("fsutil", ["fsinfo", "drives"]);
+      RegExp exp = RegExp(r" .:\\");
+      Iterable<RegExpMatch> matchs =
+          exp.allMatches(runResult.stdout.toString());
+      for (RegExpMatch match in matchs) {
+        result.putIfAbsent(match.group(0), () => Directory(match.group(0)));
+      }
+    }
+    if (Platform.isLinux || Platform.isMacOS) {
+      result.putIfAbsent("Home", () => Directory(Platform.environment['HOME']));
+      result.putIfAbsent("Root", () => Directory("/"));
+    }
+    if (Platform.isAndroid) {
+      result.putIfAbsent("Storage", () => Directory("/sdcard"));
+    }
+    return result;
+  }
 }
 
 UIPlatform instanceOfGlobalModel() => NativeUIPlatform();

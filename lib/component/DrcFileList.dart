@@ -156,25 +156,31 @@ class DrcFileListState extends State<DrcFileList>
 
   onUploadClick() async {
     UIPlatform platform = Provider.of<UIPlatform>(context, listen: false);
-    String targetPath = await FilesystemPicker.open(
+    Map<String, Directory> rootDirectories =
+        await platform.pickRootDirectories();
+    Iterable<String> targetPaths = await FilesystemPicker.open(
       title: '选择文件/文件夹',
       context: context,
-      rootDirectory: Directory(await platform.downloadPath()),
+      rootDirectories: rootDirectories.values,
+      rootNames: rootDirectories.keys,
       fsType: FilesystemType.all,
       folderIconColor: Colors.teal,
-      fileTileSelectMode: FileTileSelectMode.checkButton,
     );
 
-    if (targetPath != null && targetPath.isNotEmpty) {
-      if(FileSystemEntity.typeSync(targetPath) == FileSystemEntityType.file){
-        uploadOneItem(targetPath, new File(targetPath).parent.path);
-      } else if(FileSystemEntity.typeSync(targetPath) == FileSystemEntityType.directory){
-        List<FileSystemEntity> targets = await new Directory(targetPath)
-            .list(recursive: true, followLinks: false)
-            .where((element) => element is File)
-            .toList();
-        for (FileSystemEntity target in targets) {
-          uploadOneItem(target.path, new Directory(targetPath).parent.path);
+    if (targetPaths != null && targetPaths.isNotEmpty) {
+      for (String targetPath in targetPaths) {
+        if (FileSystemEntity.typeSync(targetPath) ==
+            FileSystemEntityType.file) {
+          uploadOneItem(targetPath, new File(targetPath).parent.path);
+        } else if (FileSystemEntity.typeSync(targetPath) ==
+            FileSystemEntityType.directory) {
+          List<FileSystemEntity> targets = await new Directory(targetPath)
+              .list(recursive: true, followLinks: false)
+              .where((element) => element is File)
+              .toList();
+          for (FileSystemEntity target in targets) {
+            uploadOneItem(target.path, new Directory(targetPath).parent.path);
+          }
         }
       }
     }
@@ -508,12 +514,14 @@ class FileItemViewState extends State<FileItemView> {
             onPressed: widget.onCopyLink,
             tooltip: "复制下载链接",
           ),
-          IconButton(
-            color: Theme.of(context).primaryColor,
-            icon: Icon(Icons.delete),
-            onPressed: widget.onDelete,
-            tooltip: "删除文件",
-          ),
+          !kIsWeb
+              ? IconButton(
+                  color: Theme.of(context).primaryColor,
+                  icon: Icon(Icons.delete),
+                  onPressed: widget.onDelete,
+                  tooltip: "删除文件",
+                )
+              : Column(),
         ],
       ),
     );

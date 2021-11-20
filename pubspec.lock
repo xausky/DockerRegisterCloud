@@ -277,10 +277,12 @@ packages:
   filesystem_picker:
     dependency: "direct main"
     description:
-      name: filesystem_picker
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "2.0.0"
+      path: package
+      ref: HEAD
+      resolved-ref: df67bfd4d6673a53ba8831e701052d94b668212c
+      url: "https://github.com/kuchienkz/filesystem_picker.git"
+    source: git
+    version: "2.0.0-nullsafety.0"
   fixnum:
     dependency: transitive
     description:

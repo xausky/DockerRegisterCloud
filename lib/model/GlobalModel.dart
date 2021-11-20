@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:docker_register_cloud/app.dart';
 import 'package:docker_register_cloud/auth.dart';
 import 'package:docker_register_cloud/helper/DrcHttpClient.dart';
@@ -65,6 +66,7 @@ abstract class UIPlatform extends ChangeNotifier with BasePlatform {
   Future<void> remove(String name);
   Future<void> open(String path);
   Future<String> downloadPath();
+  Future<Map<String, Directory>> pickRootDirectories();
 
   void writeClipboard(String content);
 
