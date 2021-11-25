@@ -55,6 +55,7 @@ jobs:
       - run: flutter pub get
       - run: dart compile exe bin/drc.dart -v -o build/${{ matrix.output-name }}
       - run: flutter build ${{ matrix.platfrom }}
+      - run: tree build
       - name: Upload Command Tools
         uses: actions/upload-artifact@v2
         with:
