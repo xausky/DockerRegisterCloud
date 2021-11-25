@@ -106,7 +106,7 @@ class NativeUIPlatform extends UIPlatform {
     if (Platform.isWindows) {
       ProcessResult runResult =
           await Process.run("fsutil", ["fsinfo", "drives"]);
-      RegExp exp = RegExp(r" .:\\");
+      RegExp exp = RegExp(r" .:");
       Iterable<RegExpMatch> matchs =
           exp.allMatches(runResult.stdout.toString());
       for (RegExpMatch match in matchs) {
