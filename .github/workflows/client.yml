@@ -32,11 +32,11 @@ jobs:
           - os: ubuntu-latest
             output-name: drc
             platfrom: linux
-            bundle-path: build/linux/release/bundle
+            bundle-path: build/linux/x64/release/bundle
           - os: macOS-latest
             output-name: drc
             platfrom: macos
-            bundle-path: build
+            bundle-path: build/macos/Build/Products/Release/docker_register_cloud.app
           - os: windows-latest
             output-name: drc.exe
             platfrom: windows
@@ -55,7 +55,9 @@ jobs:
       - run: flutter pub get
       - run: dart compile exe bin/drc.dart -v -o build/${{ matrix.output-name }}
       - run: flutter build ${{ matrix.platfrom }}
-      - run: tree build
+      - name: Print Build Files
+        run: find build
+        shell: bash
       - name: Upload Command Tools
         uses: actions/upload-artifact@v2
         with:
