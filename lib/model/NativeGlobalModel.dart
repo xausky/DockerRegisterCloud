@@ -106,11 +106,11 @@ class NativeUIPlatform extends UIPlatform {
     if (Platform.isWindows) {
       ProcessResult runResult =
           await Process.run("fsutil", ["fsinfo", "drives"]);
-      RegExp exp = RegExp(r" .:");
+      RegExp exp = RegExp(r" (.:)");
       Iterable<RegExpMatch> matchs =
           exp.allMatches(runResult.stdout.toString());
       for (RegExpMatch match in matchs) {
-        result.putIfAbsent(match.group(0), () => Directory(match.group(0)));
+        result.putIfAbsent(match.group(1), () => Directory(match.group(1) + "/"));
       }
     }
     if (Platform.isLinux || Platform.isMacOS) {
