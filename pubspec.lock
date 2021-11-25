@@ -278,9 +278,9 @@ packages:
     dependency: "direct main"
     description:
       path: package
-      ref: HEAD
-      resolved-ref: df67bfd4d6673a53ba8831e701052d94b668212c
-      url: "https://github.com/kuchienkz/filesystem_picker.git"
+      ref: dcbaf43ac2156a76a2fd09671d1febfd95088693
+      resolved-ref: dcbaf43ac2156a76a2fd09671d1febfd95088693
+      url: "https://github.com/xausky/filesystem_picker.git"
     source: git
     version: "2.0.0-nullsafety.0"
   fixnum:

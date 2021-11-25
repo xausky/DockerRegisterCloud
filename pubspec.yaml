@@ -20,8 +20,9 @@ dependencies:
   video_player_web: ^2.0.4
   filesystem_picker:
     git:
-      url: https://github.com/kuchienkz/filesystem_picker.git
+      url: https://github.com/xausky/filesystem_picker.git
       path: package
+      ref: dcbaf43ac2156a76a2fd09671d1febfd95088693
   path_provider: ^1.6.8
   angel_framework: ^2.0.0
   json_annotation: ^4.0.0

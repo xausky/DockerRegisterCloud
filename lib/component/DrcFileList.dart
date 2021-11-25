@@ -161,10 +161,11 @@ class DrcFileListState extends State<DrcFileList>
     Iterable<String> targetPaths = await FilesystemPicker.open(
       title: '选择文件/文件夹',
       context: context,
-      rootDirectories: rootDirectories.values,
-      rootNames: rootDirectories.keys,
+      rootDirectories: rootDirectories.values.toList(),
+      rootNames: rootDirectories.keys.toList(),
       fsType: FilesystemType.all,
       folderIconColor: Colors.teal,
+      multiSelect: true
     );
 
     if (targetPaths != null && targetPaths.isNotEmpty) {
