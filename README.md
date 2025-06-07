@@ -70,3 +70,5 @@ A . s ℡ & 嘀哩嘀哩 -- 重制项目图标
 本项目编写仅基于 [Docker Registry HTTP API V2](https://docs.docker.com/registry/spec/api/) 未曾尝试破解或者逆向任何公司服务，用户存储的内容以及隐私性和安全性由用户自己负责以及仓库服务提供商保证，本项目未曾也没有能力负责和保证。
 
 ### :star: 如果这个项目帮到你的话欢迎点个星
+
+[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")
